@@ -1,5 +1,6 @@
 import { ruRU } from "@clerk/localizations";
 
+
 export const ruLocalization = {
   ...ruRU,
   organizationProfile: {
