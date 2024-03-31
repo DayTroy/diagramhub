@@ -1,8 +1,8 @@
 "use client";
 
 import { Info } from "./info";
-import Participants from "./participants";
-import Toolbar from "./toolbar";
+import { Participants } from "./participants";
+import { Toolbar } from "./toolbar";
 
 interface CanvasProps {
     boardId: string;
