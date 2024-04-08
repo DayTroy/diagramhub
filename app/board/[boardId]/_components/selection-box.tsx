@@ -54,7 +54,7 @@ export const SelectionBox = memo(
               }}
               onPointerDown={(e) => {
                 e.stopPropagation();
-                // TODO: Добавить обработчик на уменьшение слоя
+                onResizeHandlePointerDown(Side.Top + Side.Left, bounds);
               }}
             />
             <rect
@@ -71,7 +71,7 @@ export const SelectionBox = memo(
               }}
               onPointerDown={(e) => {
                 e.stopPropagation();
-                // TODO: Добавить обработчик на уменьшение слоя
+                onResizeHandlePointerDown(Side.Top, bounds);
               }}
             />
             <rect
@@ -88,7 +88,7 @@ export const SelectionBox = memo(
               }}
               onPointerDown={(e) => {
                 e.stopPropagation();
-                // TODO: Добавить обработчик на уменьшение слоя
+                onResizeHandlePointerDown(Side.Top + Side.Right, bounds);  
               }}
             />
             <rect
@@ -105,7 +105,7 @@ export const SelectionBox = memo(
               }}
               onPointerDown={(e) => {
                 e.stopPropagation();
-                // TODO: Добавить обработчик на уменьшение слоя
+                onResizeHandlePointerDown(Side.Right, bounds);
               }}
             />
             <rect
@@ -122,7 +122,7 @@ export const SelectionBox = memo(
               }}
               onPointerDown={(e) => {
                 e.stopPropagation();
-                // TODO: Добавить обработчик на уменьшение слоя
+                onResizeHandlePointerDown(Side.Bottom + Side.Right, bounds);
               }}
             />
             <rect
@@ -139,7 +139,7 @@ export const SelectionBox = memo(
               }}
               onPointerDown={(e) => {
                 e.stopPropagation();
-                // TODO: Добавить обработчик на уменьшение слоя
+                onResizeHandlePointerDown(Side.Bottom, bounds);
               }}
             />
             <rect
@@ -156,7 +156,7 @@ export const SelectionBox = memo(
               }}
               onPointerDown={(e) => {
                 e.stopPropagation();
-                // TODO: Добавить обработчик на уменьшение слоя
+                onResizeHandlePointerDown(Side.Bottom + Side.Left, bounds);
               }}
             />
             <rect
@@ -173,7 +173,7 @@ export const SelectionBox = memo(
               }}
               onPointerDown={(e) => {
                 e.stopPropagation();
-                // TODO: Добавить обработчик на уменьшение слоя
+                onResizeHandlePointerDown(Side.Left, bounds);
               }}
             />
           </>
