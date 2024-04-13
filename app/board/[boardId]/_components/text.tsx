@@ -43,7 +43,7 @@ export const Text = ({
     }, [])
 
     const handleContentChange = (e: ContentEditableEvent) => {
-        updateValue(e.target.value);
+        if (e.target.value !== "") updateValue(e.target.value); 
     }
 
     return (

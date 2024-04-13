@@ -15,6 +15,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { api } from "@/convex/_generated/api";
 import { Button } from "./ui/button";
 import { useRenameModal } from "@/store/use-rename-modal";
+import { useRouter } from "next/navigation";
 
 interface ActionsProps {
     children: React.ReactNode;
@@ -31,7 +32,7 @@ export const Actions =({
     id,
     title
 }: ActionsProps) => {
-
+    const router = useRouter();
     const { onOpen } = useRenameModal();
     const {mutate, pending} = useApiMutation(api.board.remove);
 
@@ -45,7 +46,10 @@ export const Actions =({
 
     const onDelete = () => {
         mutate({ id })
-            .then(() => toast.success("Диаграмма удалена"))
+            .then(() => {
+                toast.success("Диаграмма удалена")
+                router.push(`/`)
+            })
             .catch(() => toast.error("Не удалось удалить диаграмму"))
     }
 

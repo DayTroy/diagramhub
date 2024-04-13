@@ -90,7 +90,7 @@ export const Toolbar = ({
                     canvasState.layerType === LayerType.Ellipse
                 }
             />
-            <ToolButton 
+            {/* <ToolButton 
                 label="Карандаш"
                 icon={Pencil}
                 onClick={() => setCanvasState({
@@ -99,7 +99,7 @@ export const Toolbar = ({
                 isActive={
                     canvasState.mode === CanvasMode.Pencil
                 }
-            />
+            /> */}
         </div>
         <div className="bg-white rounded-md p-1.5 flex flex-col items-center shadow-md">
             <ToolButton 
