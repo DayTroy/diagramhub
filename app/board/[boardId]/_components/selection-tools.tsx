@@ -89,7 +89,7 @@ export const SelectionTools = memo(({
             style={{
                 transform: `translate(
                     calc(${x}px - 50%),
-                    calc(${y - 16}px - 50%)
+                    calc(${y - 16}px - 100%)
                 )`
             }}
         >
