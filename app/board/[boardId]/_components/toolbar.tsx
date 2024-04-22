@@ -1,5 +1,6 @@
 import { 
     Circle, 
+    Grab, 
     MousePointer2, 
     Pencil, 
     Redo2, 
@@ -9,7 +10,7 @@ import {
     Undo2
 } from "lucide-react";
 import { ToolButton } from "./tool-button";
-import { CanvasMode, CanvasState, LayerType } from "@/types/canvas";
+import { CanvasMode, CanvasState, LayerType, GrabSource } from "@/types/canvas";
 
 interface ToolbarProps {
     canvasState: CanvasState;
@@ -40,6 +41,14 @@ export const Toolbar = ({
                     canvasState.mode === CanvasMode.Translating ||
                     canvasState.mode === CanvasMode.Pressing || 
                     canvasState.mode === CanvasMode.Resizing
+                }
+            />
+            <ToolButton 
+                label="Сдвинуть"
+                icon={Grab}
+                onClick={() => setCanvasState({mode: CanvasMode.Grab, source: GrabSource.Toolbar})}
+                isActive={
+                    canvasState.mode === CanvasMode.Grab
                 }
             />
             <ToolButton 

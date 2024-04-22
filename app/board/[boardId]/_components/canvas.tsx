@@ -1,22 +1,22 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { Camera, CanvasMode, CanvasState, Color, LayerType, Point, Side, XYWH } from "@/types/canvas";
+import { useCallback, useMemo, useState, useEffect } from "react";
+import { Camera, CanvasMode, CanvasState, Color, GrabSource, LayerType, Point, Side, XYWH } from "@/types/canvas";
 import { Info } from "./info";
 import { Participants } from "./participants";
 import { Toolbar } from "./toolbar";
 import { nanoid } from "nanoid"
 
-import { 
+import {
     useHistory,
-    useCanRedo, 
-    useCanUndo, 
+    useCanRedo,
+    useCanUndo,
     useMutation,
     useStorage,
     useOthersMapped
 } from "@/liveblocks.config";
 import { CursorsPresence } from "./cursors-presence";
-import { connectionIdToColor, findIntersectingLayersWithRectangle, pointerEventToCanvasPoint, resizeBounds } from "@/lib/utils";
+import { connectionIdToColor, findIntersectingLayersWithRectangle, mouseEventToCanvasPoint, resizeBounds } from "@/lib/utils";
 import { LiveObject } from "@liveblocks/client";
 import { LayerPreview } from "./layer-preview";
 import { SelectionBox } from "./selection-box";
@@ -47,6 +47,10 @@ export const Canvas = ({
     const history = useHistory();
     const canUndo = useCanUndo();
     const canRedo = useCanRedo();
+
+    useEffect(() => {
+        document.body.style.overflow = "hidden";
+    });
 
     const insertLayer = useMutation((
         { storage, setMyPresence },
@@ -161,7 +165,7 @@ export const Canvas = ({
     ) => {
         if (canvasState.mode !== CanvasMode.Resizing) {
             return
-        } 
+        }
 
         const bounds = resizeBounds(
             canvasState.initialBounds,
@@ -177,6 +181,52 @@ export const Canvas = ({
 
     }, [canvasState])
 
+    const grabUpdateCameraPosition = useCallback((
+        current: Point,
+        origin: Point,
+        grabSource: GrabSource
+    ) => {
+        const sensitivity = 1;
+
+        const newCamPos = {
+            x: camera.x + (current.x - origin.x) * sensitivity,
+            y: camera.y + (current.y - origin.y) * sensitivity,
+        }
+
+        setCanvasState({
+            mode: CanvasMode.Grab,
+            source: grabSource,
+            prevScreenPos: current,
+        })
+
+        setCamera((camera) => (newCamPos))
+    }, [camera]);
+
+    const handlePointerPositionChange = useMutation((
+        { setMyPresence },
+        newPointerPositionCanvas: Point,
+        newPointerPositionScreen: Point,
+    ) => {
+
+        if (canvasState.mode === CanvasMode.Pressing) {
+            startMultiSelection(newPointerPositionCanvas, canvasState.origin);
+        } else if (canvasState.mode === CanvasMode.SelectionNet) {
+            updateSelectionNet(newPointerPositionCanvas, canvasState.origin)
+        } else if (canvasState.mode === CanvasMode.Translating) {
+            translateSelectedLayers(newPointerPositionCanvas);
+        } else if (canvasState.mode === CanvasMode.Resizing) {
+            resizeSelectedLayer(newPointerPositionCanvas)
+        } else if (canvasState.mode === CanvasMode.Grab && canvasState.prevScreenPos !== undefined) {
+            grabUpdateCameraPosition(newPointerPositionScreen, canvasState.prevScreenPos, canvasState.source)
+        }
+
+        setMyPresence({ cursor:newPointerPositionCanvas });
+    }, [
+        canvasState,
+        resizeSelectedLayer,
+        translateSelectedLayers
+    ])
+
     const onResizeHandlePointerDown = useCallback((
         corner: Side,
         initialBounds: XYWH
@@ -189,49 +239,71 @@ export const Canvas = ({
         })
     }, [history])
 
-    const onWheel = useCallback((e: React.WheelEvent) => {
-        setCamera((camera) => ({
+    const onWheel = useCallback((
+        e: React.WheelEvent
+    ) => {
+        if (canvasState.mode === CanvasMode.Grab && canvasState.prevScreenPos !== undefined){
+            return;
+        }
+
+        const newCamPos = {
             x: camera.x - e.deltaX,
             y: camera.y - e.deltaY
-        }))
-    }, [])
+        }
+        if (e.shiftKey) {
+            // Если нажат shift двигаем камеру вправо-влево
+            newCamPos.x = camera.x + e.deltaY
+            newCamPos.y = camera.y + e.deltaX
+        }
 
+        setCamera((camera) => (newCamPos))
 
+        const pointerCanvasPos = mouseEventToCanvasPoint(e, newCamPos)
+        const pointerScreenPos = {x: e.clientX, y: e.clientY}
+        handlePointerPositionChange(pointerCanvasPos, pointerScreenPos)
 
-    const onPointerMove = useMutation((
-        { setMyPresence }, 
+    }, [
+        camera,
+        canvasState,
+        handlePointerPositionChange
+    ])
+
+    const onPointerMove = useCallback((
         e: React.PointerEvent
     ) => {
         e.preventDefault();
 
-        const current = pointerEventToCanvasPoint(e, camera);
-
-        if (canvasState.mode === CanvasMode.Pressing) {
-            startMultiSelection(current, canvasState.origin);
-        } else if (canvasState.mode === CanvasMode.SelectionNet) {
-            updateSelectionNet(current, canvasState.origin)
-        } else if (canvasState.mode === CanvasMode.Translating) {
-            translateSelectedLayers(current);
-        } else if (canvasState.mode === CanvasMode.Resizing) {
-            resizeSelectedLayer(current)
-        }
-
-        setMyPresence({ cursor:current });
+        const pointerCanvasPos = mouseEventToCanvasPoint(e, camera);
+        const pointerScreenPos = {x: e.clientX, y: e.clientY}
+        handlePointerPositionChange(pointerCanvasPos, pointerScreenPos)
     }, [
         camera,
-        canvasState,
-        resizeSelectedLayer,
-        translateSelectedLayers
+        handlePointerPositionChange
     ])
 
-    const onPointerLeave = useMutation(({ setMyPresence }) => {
-        setMyPresence({ cursor: null });
-    }, [])
+    const onPointerLeaveWindow = useCallback(() => {
+        if (canvasState.mode === CanvasMode.Translating ||
+            canvasState.mode === CanvasMode.Resizing ||
+            canvasState.mode === CanvasMode.SelectionNet) {
+                setCanvasState({ mode: CanvasMode.None });
+        } else if (canvasState.mode === CanvasMode.Grab) {
+            if (canvasState.source === GrabSource.ScrollWheelPress) {
+                setCanvasState({ mode: CanvasMode.None });
+            } else {
+                setCanvasState({mode: CanvasMode.Grab, source: canvasState.source})
+            }
+        }
+    }, [canvasState])
 
-    const onPointerDown = useCallback((
+    const onPointerLeaveCanvas = useMutation(({ setMyPresence }) => {
+        setMyPresence({ cursor: null });
+    }, [canvasState])
+
+    const onPointerDown = useMutation((
+        { setMyPresence },
         e: React.PointerEvent,
     ) => {
-        const point = pointerEventToCanvasPoint(e, camera);
+        const point = mouseEventToCanvasPoint(e, camera);
 
         if (canvasState.mode === CanvasMode.Inserting) {
             return
@@ -239,17 +311,27 @@ export const Canvas = ({
 
         //TODO: Если будет рисовалка то предусмотреть кейс
 
-        setCanvasState({ origin: point, mode: CanvasMode.Pressing });
-    }, [camera, canvasState.mode, setCanvasState])
+        if (canvasState.mode === CanvasMode.Grab || e.button === 1){
+            let grabSource = GrabSource.ScrollWheelPress
+            if (canvasState.mode === CanvasMode.Grab){
+                grabSource = canvasState.source;
+            }
+            const pointerScreenPos = {x: e.clientX, y: e.clientY}
+            setCanvasState({prevScreenPos: pointerScreenPos, mode: CanvasMode.Grab, source: grabSource})
+            setMyPresence({ selection: [] })
+        } else {
+            setCanvasState({ origin: point, mode: CanvasMode.Pressing });
+        }
+    }, [camera, canvasState, setCanvasState])
 
     const onPointerUp = useMutation((
         {},
         e
     ) => {
-        const point = pointerEventToCanvasPoint(e, camera);
+        const point = mouseEventToCanvasPoint(e, camera);
 
         if (
-            canvasState.mode === CanvasMode.None || 
+            canvasState.mode === CanvasMode.None ||
             canvasState.mode === CanvasMode.Pressing
         ) {
             unselectLayers();
@@ -258,13 +340,20 @@ export const Canvas = ({
             })
         } else if (canvasState.mode === CanvasMode.Inserting) {
             insertLayer(canvasState.layerType, point)
+        } else if (canvasState.mode === CanvasMode.Grab)  {
+            if (canvasState.source === GrabSource.ScrollWheelPress)
+            {
+                setCanvasState({mode: CanvasMode.None});
+            } else {
+                setCanvasState({mode: CanvasMode.Grab, source: canvasState.source})
+            }
         } else {
             setCanvasState({
                 mode: CanvasMode.None
             });
         }
         history.resume();
-    }, 
+    },
     [
         camera,
         canvasState,
@@ -290,7 +379,7 @@ export const Canvas = ({
         history.pause();
         e.stopPropagation();
 
-        const point = pointerEventToCanvasPoint(e, camera);
+        const point = mouseEventToCanvasPoint(e, camera);
 
         if (!self.presence.selection.includes(layerId)) {
             setMyPresence({ selection: [layerId ]}, { addToHistory: true });
@@ -322,6 +411,7 @@ export const Canvas = ({
     return (
         <main
             className="h-full w-full relative bg-neutral-100 touch-none"
+            onPointerLeave={onPointerLeaveWindow}
         >
             <Info boardId={boardId} />
             <Participants />
@@ -341,8 +431,8 @@ export const Canvas = ({
                 className="h-[100vh] w-[100vw]"
                 onWheel={onWheel}
                 onPointerMove={onPointerMove}
-                onPointerLeave={onPointerLeave}
                 onPointerUp={onPointerUp}
+                onPointerLeave={onPointerLeaveCanvas}
                 onPointerDown={onPointerDown}
             >
                 <g
