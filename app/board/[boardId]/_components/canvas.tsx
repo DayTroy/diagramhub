@@ -21,6 +21,7 @@ import { LiveObject } from "@liveblocks/client";
 import { LayerPreview } from "./layer-preview";
 import { SelectionBox } from "./selection-box";
 import { SelectionTools } from "./selection-tools";
+import { Grab } from "lucide-react";
 
 const MAX_LAYERS = 100;
 
@@ -182,30 +183,18 @@ export const Canvas = ({
     }, [canvasState])
 
     const grabUpdateCameraPosition = useCallback((
-        current: Point,
-        origin: Point,
-        grabSource: GrabSource
+        delta: Point
     ) => {
-        const sensitivity = 1;
-
-        const newCamPos = {
-            x: camera.x + (current.x - origin.x) * sensitivity,
-            y: camera.y + (current.y - origin.y) * sensitivity,
-        }
-
-        setCanvasState({
-            mode: CanvasMode.Grab,
-            source: grabSource,
-            prevScreenPos: current,
-        })
-
-        setCamera((camera) => (newCamPos))
-    }, [camera]);
+        setCamera((camera) => ({
+            x: camera.x + delta.x,
+            y: camera.y + delta.y
+        }))
+    }, []);
 
     const handlePointerPositionChange = useMutation((
         { setMyPresence },
         newPointerPositionCanvas: Point,
-        newPointerPositionScreen: Point,
+        e: React.MouseEvent,
     ) => {
 
         if (canvasState.mode === CanvasMode.Pressing) {
@@ -216,8 +205,8 @@ export const Canvas = ({
             translateSelectedLayers(newPointerPositionCanvas);
         } else if (canvasState.mode === CanvasMode.Resizing) {
             resizeSelectedLayer(newPointerPositionCanvas)
-        } else if (canvasState.mode === CanvasMode.Grab && canvasState.prevScreenPos !== undefined) {
-            grabUpdateCameraPosition(newPointerPositionScreen, canvasState.prevScreenPos, canvasState.source)
+        } else if (canvasState.mode === CanvasMode.Grab && e.buttons !== 0) {
+            grabUpdateCameraPosition({x: e.movementX, y: e.movementY})
         }
 
         setMyPresence({ cursor:newPointerPositionCanvas });
@@ -242,7 +231,7 @@ export const Canvas = ({
     const onWheel = useCallback((
         e: React.WheelEvent
     ) => {
-        if (canvasState.mode === CanvasMode.Grab && canvasState.prevScreenPos !== undefined){
+        if (canvasState.mode === CanvasMode.Grab && e.buttons !== 0){
             return;
         }
 
@@ -259,8 +248,7 @@ export const Canvas = ({
         setCamera((camera) => (newCamPos))
 
         const pointerCanvasPos = mouseEventToCanvasPoint(e, newCamPos)
-        const pointerScreenPos = {x: e.clientX, y: e.clientY}
-        handlePointerPositionChange(pointerCanvasPos, pointerScreenPos)
+        handlePointerPositionChange(pointerCanvasPos, e)
 
     }, [
         camera,
@@ -274,8 +262,7 @@ export const Canvas = ({
         e.preventDefault();
 
         const pointerCanvasPos = mouseEventToCanvasPoint(e, camera);
-        const pointerScreenPos = {x: e.clientX, y: e.clientY}
-        handlePointerPositionChange(pointerCanvasPos, pointerScreenPos)
+        handlePointerPositionChange(pointerCanvasPos, e)
     }, [
         camera,
         handlePointerPositionChange
@@ -311,15 +298,9 @@ export const Canvas = ({
 
         //TODO: Если будет рисовалка то предусмотреть кейс
 
-        if (canvasState.mode === CanvasMode.Grab || e.button === 1){
-            let grabSource = GrabSource.ScrollWheelPress
-            if (canvasState.mode === CanvasMode.Grab){
-                grabSource = canvasState.source;
-            }
-            const pointerScreenPos = {x: e.clientX, y: e.clientY}
-            setCanvasState({prevScreenPos: pointerScreenPos, mode: CanvasMode.Grab, source: grabSource})
-            setMyPresence({ selection: [] })
-        } else {
+        if (e.button === 1) {
+            setCanvasState({mode: CanvasMode.Grab, source: GrabSource.ScrollWheelPress})
+        } else if (canvasState.mode !== CanvasMode.Grab) {
             setCanvasState({ origin: point, mode: CanvasMode.Pressing });
         }
     }, [camera, canvasState, setCanvasState])
@@ -344,8 +325,6 @@ export const Canvas = ({
             if (canvasState.source === GrabSource.ScrollWheelPress)
             {
                 setCanvasState({mode: CanvasMode.None});
-            } else {
-                setCanvasState({mode: CanvasMode.Grab, source: canvasState.source})
             }
         } else {
             setCanvasState({

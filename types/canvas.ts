@@ -118,8 +118,7 @@ export type CanvasState =
     }
     | {
         mode: CanvasMode.Grab,
-        source: GrabSource,
-        prevScreenPos?: Point;
+        source: GrabSource;
     }
 
 export enum CanvasMode {
