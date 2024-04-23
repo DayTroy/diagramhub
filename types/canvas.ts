@@ -87,14 +87,14 @@ export enum Side {
     Right = 8
 };
 
-export type CanvasState = 
+export type CanvasState =
     | {
         mode: CanvasMode.None;
     }
     | {
         mode: CanvasMode.Pressing,
         origin: Point;
-    }  
+    }
     | {
         mode: CanvasMode.SelectionNet,
         origin: Point;
@@ -103,28 +103,38 @@ export type CanvasState =
     | {
         mode: CanvasMode.Translating,
         current: Point;
-    }   
+    }
     | {
         mode: CanvasMode.Inserting,
         layerType: LayerType.Ellipse | LayerType.Rectangle | LayerType.Text | LayerType.Note;
-    }  
+    }
     | {
         mode: CanvasMode.Resizing,
         initialBounds: XYWH;
         corner: Side;
-    }  
+    }
     | {
         mode: CanvasMode.Pencil,
-    }  
+    }
+    | {
+        mode: CanvasMode.Grab,
+        source: GrabSource;
+    }
 
 export enum CanvasMode {
-    None, 
+    None,
     Pressing,
     SelectionNet,
     Translating,
     Inserting,
     Resizing,
-    Pencil
+    Pencil,
+    Grab
+};
+
+export enum GrabSource {
+    Toolbar,
+    ScrollWheelPress
 };
 
 export type Layer = RectangleLayer | EllipseLayer | PathLayer | TextLayer | NoteLayer;
