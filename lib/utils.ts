@@ -1,7 +1,7 @@
 import { Camera, Color, Layer, Point, Side, XYWH } from "@/types/canvas";
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const COLORS = [
   "#DC2626",
@@ -24,8 +24,8 @@ export function mouseEventToCanvasPoint(
   camera: Camera
 ) {
   return {
-    x: Math.round(e.clientX) - camera.x,
-    y: Math.round(e.clientY) - camera.y,
+    x: (Math.round(e.clientX) / camera.scale) - camera.x,
+    y: (Math.round(e.clientY) / camera.scale) - camera.y,
   }
 }
 
@@ -104,3 +104,38 @@ export function getContrastingTextColor(color: Color) {
 
   return luminance > 182 ? "black": "white";
 }
+
+function usePreventZoom(scrollCheck = true, keyboardCheck = true) {
+  useEffect(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (
+        keyboardCheck &&
+        e.ctrlKey &&
+        (e.code == "61" ||
+          e.code == "107" ||
+          e.code == "173" ||
+          e.code == "109" ||
+          e.code == "187" ||
+          e.code == "189")
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      if (scrollCheck && e.ctrlKey) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeydown);
+    document.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      document.removeEventListener("keydown", handleKeydown);
+      document.removeEventListener("wheel", handleWheel);
+    };
+  }, [scrollCheck, keyboardCheck]);
+}
+
+export default usePreventZoom

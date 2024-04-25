@@ -16,7 +16,7 @@ import {
     useOthersMapped
 } from "@/liveblocks.config";
 import { CursorsPresence } from "./cursors-presence";
-import { connectionIdToColor, findIntersectingLayersWithRectangle, mouseEventToCanvasPoint, resizeBounds } from "@/lib/utils";
+import usePreventZoom, { connectionIdToColor, findIntersectingLayersWithRectangle, mouseEventToCanvasPoint, resizeBounds } from "@/lib/utils";
 import { LiveObject } from "@liveblocks/client";
 import { LayerPreview } from "./layer-preview";
 import { SelectionBox } from "./selection-box";
@@ -38,7 +38,7 @@ export const Canvas = ({
         mode: CanvasMode.None
     });
 
-    const [camera, setCamera] = useState<Camera>({ x: 0, y: 0 });
+    const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, scale: 1 });
     const [lastUsedColor, setLastUsedColor] = useState<Color>({
         r: 0,
         g: 0,
@@ -49,6 +49,7 @@ export const Canvas = ({
     const canUndo = useCanUndo();
     const canRedo = useCanRedo();
 
+    usePreventZoom();
     useEffect(() => {
         document.body.style.overflow = "hidden";
     });
@@ -87,15 +88,20 @@ export const Canvas = ({
 
     const translateSelectedLayers = useMutation((
         { storage, self },
-        point: Point
+        pointerDelta: Point
     ) => {
         if( canvasState.mode !== CanvasMode.Translating) {
             return;
         }
 
+        /*const offset = {
+            x: (point.x - canvasState.current.x) / camera.scale,
+            y: (point.y - canvasState.current.y) / camera.scale,
+        }*/
+
         const offset = {
-            x: point.x - canvasState.current.x,
-            y: point.y - canvasState.current.y,
+            x: pointerDelta.x / camera.scale,
+            y: pointerDelta.y / camera.scale,
         }
 
         const liveLayers = storage.get("layers");
@@ -110,7 +116,7 @@ export const Canvas = ({
                 })
             }
         }
-        setCanvasState({ mode: CanvasMode.Translating, current: point });
+        setCanvasState({ mode: CanvasMode.Translating, current: pointerDelta });
 
     }, [
         canvasState,
@@ -132,8 +138,8 @@ export const Canvas = ({
         const layers = storage.get("layers").toImmutable();
         setCanvasState({
             mode: CanvasMode.SelectionNet,
-            origin,
-            current
+            origin: origin/*{x: origin.x * camera.scale, y: origin.y * camera.scale}*/,
+            current: current/*{x: current.x * camera.scale, y: current.y * camera.scale}*/,
         })
         const ids = findIntersectingLayersWithRectangle(
             layerIds,
@@ -143,7 +149,7 @@ export const Canvas = ({
         );
         setMyPresence({ selection: ids })
 
-    }, [layerIds]);
+    }, [layerIds, camera]);
 
     const startMultiSelection = useCallback((
         current: Point,
@@ -186,8 +192,9 @@ export const Canvas = ({
         delta: Point
     ) => {
         setCamera((camera) => ({
-            x: camera.x + delta.x,
-            y: camera.y + delta.y
+            x: camera.x + (delta.x / camera.scale),
+            y: camera.y + (delta.y / camera.scale),
+            scale: camera.scale
         }))
     }, []);
 
@@ -202,7 +209,7 @@ export const Canvas = ({
         } else if (canvasState.mode === CanvasMode.SelectionNet) {
             updateSelectionNet(newPointerPositionCanvas, canvasState.origin)
         } else if (canvasState.mode === CanvasMode.Translating) {
-            translateSelectedLayers(newPointerPositionCanvas);
+            translateSelectedLayers({x: e.movementX, y: e.movementY});
         } else if (canvasState.mode === CanvasMode.Resizing) {
             resizeSelectedLayer(newPointerPositionCanvas)
         } else if (canvasState.mode === CanvasMode.Grab && e.buttons !== 0) {
@@ -235,19 +242,32 @@ export const Canvas = ({
             return;
         }
 
-        const newCamPos = {
-            x: camera.x - e.deltaX,
-            y: camera.y - e.deltaY
+        const clamp = (val: number, min: number, max: number) => Math.min(Math.max(val, min), max);
+
+        const newCamData = {
+            x: camera.x,
+            y: camera.y,
+            scale: camera.scale
         }
-        if (e.shiftKey) {
+
+        if (e.ctrlKey) {
+            const prevMousePos = mouseEventToCanvasPoint(e, newCamData)
+            newCamData.scale = clamp(newCamData.scale - (0.1 * Math.sign(e.deltaY)), 0.2, 2);
+            const newMousePos = mouseEventToCanvasPoint(e, newCamData)
+            newCamData.x = camera.x - (prevMousePos.x - newMousePos.x);
+            newCamData.y = camera.y - (prevMousePos.y - newMousePos.y);;
+        } else if (e.shiftKey) {
             // Если нажат shift двигаем камеру вправо-влево
-            newCamPos.x = camera.x + e.deltaY
-            newCamPos.y = camera.y + e.deltaX
+            newCamData.x = camera.x + (e.deltaY / camera.scale);
+            newCamData.y = camera.y + (e.deltaX / camera.scale);
+        } else {
+            newCamData.x = camera.x - (e.deltaX / camera.scale);
+            newCamData.y = camera.y - (e.deltaY / camera.scale);
         }
 
-        setCamera((camera) => (newCamPos))
+        setCamera((camera) => (newCamData))
 
-        const pointerCanvasPos = mouseEventToCanvasPoint(e, newCamPos)
+        const pointerCanvasPos = mouseEventToCanvasPoint(e, newCamData)
         handlePointerPositionChange(pointerCanvasPos, e)
 
     }, [
@@ -262,6 +282,9 @@ export const Canvas = ({
         e.preventDefault();
 
         const pointerCanvasPos = mouseEventToCanvasPoint(e, camera);
+
+        //console.log("Flat: %o; RelToCam: %o", {x: e.clientX, y: e.clientY}, pointerCanvasPos)
+
         handlePointerPositionChange(pointerCanvasPos, e)
     }, [
         camera,
@@ -290,7 +313,7 @@ export const Canvas = ({
         { setMyPresence },
         e: React.PointerEvent,
     ) => {
-        const point = mouseEventToCanvasPoint(e, camera);
+        const pointerCanvasPos = mouseEventToCanvasPoint(e, camera);
 
         if (canvasState.mode === CanvasMode.Inserting) {
             return
@@ -298,10 +321,12 @@ export const Canvas = ({
 
         //TODO: Если будет рисовалка то предусмотреть кейс
 
+        console.log("Flat: %o; RelToCam: %o", {x: e.clientX, y: e.clientY}, pointerCanvasPos)
+
         if (e.button === 1) {
             setCanvasState({mode: CanvasMode.Grab, source: GrabSource.ScrollWheelPress})
         } else if (canvasState.mode !== CanvasMode.Grab) {
-            setCanvasState({ origin: point, mode: CanvasMode.Pressing });
+            setCanvasState({ origin: pointerCanvasPos, mode: CanvasMode.Pressing });
         }
     }, [camera, canvasState, setCanvasState])
 
@@ -349,7 +374,7 @@ export const Canvas = ({
         layerId: string,
     ) => {
         if (
-            canvasState.mode === CanvasMode.Pencil || 
+            canvasState.mode === CanvasMode.Pencil ||
             canvasState.mode === CanvasMode.Inserting
         ) {
             return;
@@ -394,7 +419,7 @@ export const Canvas = ({
         >
             <Info boardId={boardId} />
             <Participants />
-            <Toolbar 
+            <Toolbar
                 canvasState={canvasState}
                 setCanvasState={setCanvasState}
                 canRedo={canRedo}
@@ -416,7 +441,8 @@ export const Canvas = ({
             >
                 <g
                     style={{
-                        transform: `translate(${camera.x}px, ${camera.y}px)`
+                        transform: `translate(${camera.x}px, ${camera.y}px)`,
+                        scale: `${camera.scale}`
                     }}
                 >
                     {layerIds.map((layerId) => (
@@ -431,7 +457,7 @@ export const Canvas = ({
                         onResizeHandlePointerDown={onResizeHandlePointerDown}
                     />
                     {canvasState.mode === CanvasMode.SelectionNet && canvasState.current != null && (
-                        <rect 
+                        <rect
                             className="fill-blue-500/5 stroke-blue-500 stroke-1"
                             x={Math.min(canvasState.origin.x, canvasState.current.x)}
                             y={Math.min(canvasState.origin.y, canvasState.current.y)}
