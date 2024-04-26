@@ -441,6 +441,7 @@ export const Canvas = ({
         <main
             className="h-full w-full relative bg-neutral-100 touch-none"
             onPointerLeave={onPointerLeaveWindow}
+            onPointerUp={onPointerUp}
         >
             <Info boardId={boardId} />
             <Participants />
@@ -465,7 +466,6 @@ export const Canvas = ({
                 className="h-[100vh] w-[100vw]"
                 onWheel={onWheel}
                 onPointerMove={onPointerMove}
-                onPointerUp={onPointerUp}
                 onPointerLeave={onPointerLeaveCanvas}
                 onPointerDown={onPointerDown}
             >
