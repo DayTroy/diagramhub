@@ -2,6 +2,7 @@ import { Loader } from "lucide-react"
 import { InfoSkeleton } from "./info"
 import { ParticipantsSkeleton } from "./participants"
 import { ToolbarSkeleton } from "./toolbar"
+import { ZoomBarSkeleton } from "./zoom-bar"
 
 
 export const Loading = () => {
@@ -13,6 +14,7 @@ export const Loading = () => {
         <InfoSkeleton />
         <ParticipantsSkeleton />
         <ToolbarSkeleton />
+        <ZoomBarSkeleton />
     </main>
   )
 }

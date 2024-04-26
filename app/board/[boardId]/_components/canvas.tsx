@@ -16,12 +16,13 @@ import {
     useOthersMapped
 } from "@/liveblocks.config";
 import { CursorsPresence } from "./cursors-presence";
-import { connectionIdToColor, findIntersectingLayersWithRectangle, mouseEventToCanvasPoint, resizeBounds } from "@/lib/utils";
+import { clamp, connectionIdToColor, findIntersectingLayersWithRectangle, mouseEventToCanvasPoint, resizeBounds, screenPointToCanvasPoint } from "@/lib/utils";
 import { LiveObject } from "@liveblocks/client";
 import { LayerPreview } from "./layer-preview";
 import { SelectionBox } from "./selection-box";
 import { SelectionTools } from "./selection-tools";
-import { Grab } from "lucide-react";
+import { ZoomBar } from "./zoom-bar";
+import usePreventZoom from "@/lib/prevent_zoom";
 
 const MAX_LAYERS = 100;
 
@@ -38,7 +39,10 @@ export const Canvas = ({
         mode: CanvasMode.None
     });
 
-    const [camera, setCamera] = useState<Camera>({ x: 0, y: 0 });
+    const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, scale: 1 });
+    const MAX_CAM_SCALE = 2;
+    const MIN_CAM_SCALE = 0.2;
+
     const [lastUsedColor, setLastUsedColor] = useState<Color>({
         r: 0,
         g: 0,
@@ -49,6 +53,7 @@ export const Canvas = ({
     const canUndo = useCanUndo();
     const canRedo = useCanRedo();
 
+    usePreventZoom();
     useEffect(() => {
         document.body.style.overflow = "hidden";
     });
@@ -56,7 +61,7 @@ export const Canvas = ({
     const insertLayer = useMutation((
         { storage, setMyPresence },
         layerType: LayerType.Ellipse | LayerType.Rectangle | LayerType.Text | LayerType.Note,
-        position: Point
+        positionCC: Point
     ) => {
         const liveLayers = storage.get("layers");
 
@@ -70,8 +75,8 @@ export const Canvas = ({
 
         const layer = new LiveObject({
             type: layerType,
-            x: position.x,
-            y: position.y,
+            x: positionCC.x,
+            y: positionCC.y,
             height: 100,
             width: 100,
             fill: lastUsedColor
@@ -87,15 +92,15 @@ export const Canvas = ({
 
     const translateSelectedLayers = useMutation((
         { storage, self },
-        point: Point
+        pointerDeltaSC: Point
     ) => {
         if( canvasState.mode !== CanvasMode.Translating) {
             return;
         }
 
         const offset = {
-            x: point.x - canvasState.current.x,
-            y: point.y - canvasState.current.y,
+            x: pointerDeltaSC.x / camera.scale,
+            y: pointerDeltaSC.y / camera.scale,
         }
 
         const liveLayers = storage.get("layers");
@@ -110,7 +115,7 @@ export const Canvas = ({
                 })
             }
         }
-        setCanvasState({ mode: CanvasMode.Translating, current: point });
+        setCanvasState({ mode: CanvasMode.Translating });
 
     }, [
         canvasState,
@@ -126,43 +131,43 @@ export const Canvas = ({
 
     const updateSelectionNet = useMutation((
         { storage, setMyPresence },
-        current: Point,
-        origin: Point,
+        currentCC: Point,
+        originCC: Point,
     ) => {
         const layers = storage.get("layers").toImmutable();
         setCanvasState({
             mode: CanvasMode.SelectionNet,
-            origin,
-            current
+            origin: originCC,
+            current: currentCC,
         })
         const ids = findIntersectingLayersWithRectangle(
             layerIds,
             layers,
-            origin,
-            current
+            originCC,
+            currentCC
         );
         setMyPresence({ selection: ids })
 
-    }, [layerIds]);
+    }, [layerIds, camera]);
 
     const startMultiSelection = useCallback((
-        current: Point,
-        origin: Point,
+        currentCC: Point,
+        originCC: Point,
     ) => {
         if (
-            Math.abs(current.x - origin.x) + Math.abs(current.y - origin.y) > 5
+            Math.abs(currentCC.x - originCC.x) + Math.abs(currentCC.y - originCC.y) > 5
         ) {
             setCanvasState({
                 mode: CanvasMode.SelectionNet,
-                origin,
-                current
+                origin: originCC,
+                current: currentCC
             })
         }
     }, [])
 
     const resizeSelectedLayer = useMutation((
         { storage, self },
-        point: Point,
+        pointCC: Point,
     ) => {
         if (canvasState.mode !== CanvasMode.Resizing) {
             return
@@ -171,7 +176,7 @@ export const Canvas = ({
         const bounds = resizeBounds(
             canvasState.initialBounds,
             canvasState.corner,
-            point,
+            pointCC,
         );
         const liveLayers = storage.get("layers");
         const layer = liveLayers.get(self.presence.selection[0]);
@@ -183,33 +188,34 @@ export const Canvas = ({
     }, [canvasState])
 
     const grabUpdateCameraPosition = useCallback((
-        delta: Point
+        moveVectorSC: Point
     ) => {
         setCamera((camera) => ({
-            x: camera.x + delta.x,
-            y: camera.y + delta.y
+            x: camera.x + (moveVectorSC.x / camera.scale),
+            y: camera.y + (moveVectorSC.y / camera.scale),
+            scale: camera.scale
         }))
     }, []);
 
     const handlePointerPositionChange = useMutation((
         { setMyPresence },
-        newPointerPositionCanvas: Point,
+        newPointerPositionCC: Point,
         e: React.MouseEvent,
     ) => {
 
         if (canvasState.mode === CanvasMode.Pressing) {
-            startMultiSelection(newPointerPositionCanvas, canvasState.origin);
+            startMultiSelection(newPointerPositionCC, canvasState.origin);
         } else if (canvasState.mode === CanvasMode.SelectionNet) {
-            updateSelectionNet(newPointerPositionCanvas, canvasState.origin)
+            updateSelectionNet(newPointerPositionCC, canvasState.origin)
         } else if (canvasState.mode === CanvasMode.Translating) {
-            translateSelectedLayers(newPointerPositionCanvas);
+            translateSelectedLayers({x: e.movementX, y: e.movementY});
         } else if (canvasState.mode === CanvasMode.Resizing) {
-            resizeSelectedLayer(newPointerPositionCanvas)
+            resizeSelectedLayer(newPointerPositionCC)
         } else if (canvasState.mode === CanvasMode.Grab && e.buttons !== 0) {
             grabUpdateCameraPosition({x: e.movementX, y: e.movementY})
         }
 
-        setMyPresence({ cursor:newPointerPositionCanvas });
+        setMyPresence({ cursor:newPointerPositionCC });
     }, [
         canvasState,
         resizeSelectedLayer,
@@ -228,6 +234,51 @@ export const Canvas = ({
         })
     }, [history])
 
+    const zoomCamera = useCallback((
+        amount: number,
+        zoomCenterSC: Point
+    ) => {
+        const newCamData = {
+            x: camera.x,
+            y: camera.y,
+            scale: camera.scale
+        }
+
+        const preZoomCenterPos = screenPointToCanvasPoint(zoomCenterSC, newCamData);
+        newCamData.scale = clamp(newCamData.scale + amount, MIN_CAM_SCALE, MAX_CAM_SCALE);
+        const postZoomCenterPos = screenPointToCanvasPoint(zoomCenterSC, newCamData);
+
+        newCamData.x = camera.x - (preZoomCenterPos.x - postZoomCenterPos.x);
+        newCamData.y = camera.y - (preZoomCenterPos.y - postZoomCenterPos.y);
+
+        setCamera((camera) => (newCamData));
+
+        return newCamData;
+    }, [camera])
+
+    const zoomToCenter = useCallback((
+        zoomIn: Boolean
+    ) => {
+        const screenCenter = {x: window.innerWidth/2, y: window.innerHeight/2};
+        const amount = zoomIn ? 0.1 : -0.1;
+
+        zoomCamera(amount, screenCenter);
+    }, [zoomCamera])
+
+    const moveCamera = useCallback((
+        moveVectorSC: Point
+    ) => {
+        const newCamData = {
+            x: camera.x + (moveVectorSC.x / camera.scale),
+            y: camera.y + (moveVectorSC.y / camera.scale),
+            scale: camera.scale
+        };
+
+        setCamera((camera) => (newCamData));
+
+        return newCamData;
+    }, [camera])
+
     const onWheel = useCallback((
         e: React.WheelEvent
     ) => {
@@ -235,25 +286,26 @@ export const Canvas = ({
             return;
         }
 
-        const newCamPos = {
-            x: camera.x - e.deltaX,
-            y: camera.y - e.deltaY
-        }
-        if (e.shiftKey) {
-            // Если нажат shift двигаем камеру вправо-влево
-            newCamPos.x = camera.x + e.deltaY
-            newCamPos.y = camera.y + e.deltaX
+        let newCamData;
+        if (e.ctrlKey) {
+            // Handle zoom
+            newCamData = zoomCamera(0.1 * Math.round(-e.deltaY / 100), {x: e.clientX, y: e.clientY})
+        } else {
+            // Handle move
+            if (e.shiftKey) {
+                newCamData = moveCamera({x: e.deltaY, y: e.deltaX});
+            } else {
+                newCamData = moveCamera({x: -e.deltaX, y: -e.deltaY});
+            }
         }
 
-        setCamera((camera) => (newCamPos))
-
-        const pointerCanvasPos = mouseEventToCanvasPoint(e, newCamPos)
+        const pointerCanvasPos = mouseEventToCanvasPoint(e, newCamData)
         handlePointerPositionChange(pointerCanvasPos, e)
-
     }, [
-        camera,
         canvasState,
-        handlePointerPositionChange
+        handlePointerPositionChange,
+        moveCamera,
+        zoomCamera
     ])
 
     const onPointerMove = useCallback((
@@ -262,6 +314,7 @@ export const Canvas = ({
         e.preventDefault();
 
         const pointerCanvasPos = mouseEventToCanvasPoint(e, camera);
+
         handlePointerPositionChange(pointerCanvasPos, e)
     }, [
         camera,
@@ -290,7 +343,7 @@ export const Canvas = ({
         { setMyPresence },
         e: React.PointerEvent,
     ) => {
-        const point = mouseEventToCanvasPoint(e, camera);
+        const pointerCanvasPos = mouseEventToCanvasPoint(e, camera);
 
         if (canvasState.mode === CanvasMode.Inserting) {
             return
@@ -301,7 +354,7 @@ export const Canvas = ({
         if (e.button === 1) {
             setCanvasState({mode: CanvasMode.Grab, source: GrabSource.ScrollWheelPress})
         } else if (canvasState.mode !== CanvasMode.Grab) {
-            setCanvasState({ origin: point, mode: CanvasMode.Pressing });
+            setCanvasState({ origin: pointerCanvasPos, mode: CanvasMode.Pressing });
         }
     }, [camera, canvasState, setCanvasState])
 
@@ -349,7 +402,7 @@ export const Canvas = ({
         layerId: string,
     ) => {
         if (
-            canvasState.mode === CanvasMode.Pencil || 
+            canvasState.mode === CanvasMode.Pencil ||
             canvasState.mode === CanvasMode.Inserting
         ) {
             return;
@@ -358,14 +411,11 @@ export const Canvas = ({
         history.pause();
         e.stopPropagation();
 
-        const point = mouseEventToCanvasPoint(e, camera);
-
         if (!self.presence.selection.includes(layerId)) {
             setMyPresence({ selection: [layerId ]}, { addToHistory: true });
         }
 
-        setCanvasState({ mode: CanvasMode.Translating, current: point });
-
+        setCanvasState({ mode: CanvasMode.Translating });
     }, [
         setCanvasState,
         camera,
@@ -391,10 +441,11 @@ export const Canvas = ({
         <main
             className="h-full w-full relative bg-neutral-100 touch-none"
             onPointerLeave={onPointerLeaveWindow}
+            onPointerUp={onPointerUp}
         >
             <Info boardId={boardId} />
             <Participants />
-            <Toolbar 
+            <Toolbar
                 canvasState={canvasState}
                 setCanvasState={setCanvasState}
                 canRedo={canRedo}
@@ -406,17 +457,22 @@ export const Canvas = ({
                 camera={camera}
                 setLastUsedColor={setLastUsedColor}
             />
+            <ZoomBar
+                cameraScale={camera.scale}
+                zoomIn={() => zoomToCenter(true)}
+                zoomOut={() => zoomToCenter(false)}
+            />
             <svg
                 className="h-[100vh] w-[100vw]"
                 onWheel={onWheel}
                 onPointerMove={onPointerMove}
-                onPointerUp={onPointerUp}
                 onPointerLeave={onPointerLeaveCanvas}
                 onPointerDown={onPointerDown}
             >
                 <g
                     style={{
-                        transform: `translate(${camera.x}px, ${camera.y}px)`
+                        transform: `translate(${camera.x}px, ${camera.y}px)`,
+                        scale: `${camera.scale}`
                     }}
                 >
                     {layerIds.map((layerId) => (
@@ -431,7 +487,7 @@ export const Canvas = ({
                         onResizeHandlePointerDown={onResizeHandlePointerDown}
                     />
                     {canvasState.mode === CanvasMode.SelectionNet && canvasState.current != null && (
-                        <rect 
+                        <rect
                             className="fill-blue-500/5 stroke-blue-500 stroke-1"
                             x={Math.min(canvasState.origin.x, canvasState.current.x)}
                             y={Math.min(canvasState.origin.y, canvasState.current.y)}

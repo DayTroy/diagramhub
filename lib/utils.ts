@@ -1,7 +1,6 @@
 import { Camera, Color, Layer, Point, Side, XYWH } from "@/types/canvas";
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { useState, useEffect } from 'react';
 
 const COLORS = [
   "#DC2626",
@@ -23,9 +22,16 @@ export function mouseEventToCanvasPoint(
   e: React.MouseEvent,
   camera: Camera
 ) {
+  return screenPointToCanvasPoint({x: e.clientX, y: e.clientY}, camera)
+}
+
+export function screenPointToCanvasPoint(
+  p: Point,
+  camera: Camera
+) {
   return {
-    x: Math.round(e.clientX) - camera.x,
-    y: Math.round(e.clientY) - camera.y,
+    x: (Math.round(p.x) / camera.scale) - camera.x,
+    y: (Math.round(p.y) / camera.scale) - camera.y,
   }
 }
 
@@ -103,4 +109,8 @@ export function getContrastingTextColor(color: Color) {
   const luminance = 0.299 * color.r + 0.587 * color.g + 0.114 * color.b;
 
   return luminance > 182 ? "black": "white";
+}
+
+export function clamp(val: number, min: number, max: number) {
+  return Math.min(Math.max(val, min), max)
 }

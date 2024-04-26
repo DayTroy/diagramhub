@@ -7,6 +7,7 @@ export type Color = {
 export type Camera = {
     x: number;
     y: number;
+    scale: number;
 }
 
 export enum LayerType {
@@ -102,7 +103,6 @@ export type CanvasState =
     }
     | {
         mode: CanvasMode.Translating,
-        current: Point;
     }
     | {
         mode: CanvasMode.Inserting,
