@@ -1,3 +1,7 @@
+/**
+ *  Component representing overlay of board card
+ *  @category Component
+ */
 export const Overlay = () => {
     return (
         <div

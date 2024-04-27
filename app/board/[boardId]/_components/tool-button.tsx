@@ -4,7 +4,10 @@ import { LucideIcon } from "lucide-react";
 import { Hint } from "@/components/hint";
 import { Button } from "@/components/ui/button";
 
-interface ToolButtonProps {
+/**
+ * The props type for {@link ToolButton}
+ */
+export interface ToolButtonProps {
     label: string;
     icon: LucideIcon;
     onClick: () => void;
@@ -12,6 +15,10 @@ interface ToolButtonProps {
     isDisabled?: boolean;
 };
 
+/**
+ *  Component representing tool button on toolbar
+ *  @category Component
+ */
 export const ToolButton = ({
     label, 
     icon: Icon, 

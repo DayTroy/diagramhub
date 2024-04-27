@@ -1,6 +1,11 @@
 import { useEffect } from "react";
 
-function usePreventZoom(scrollCheck = true, keyboardCheck = true) {
+/**
+ * Prevents default browser zoom on page
+ * @param scrollCheck prevent scroll wheel zoom
+ * @param keyboardCheck prevent  keyboard zoom
+ */
+export function usePreventZoom(scrollCheck = true, keyboardCheck = true) {
     useEffect(() => {
       const handleKeydown = (e: KeyboardEvent) => {
         if (

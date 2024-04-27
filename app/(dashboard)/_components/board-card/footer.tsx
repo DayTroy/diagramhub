@@ -2,7 +2,10 @@ import { Star } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
-interface FooterProps {
+/**
+ * The props type for {@link Footer}
+ */
+export interface FooterProps {
     title: string;
     authorLabel: string;
     createdAtLabel: string;
@@ -11,6 +14,10 @@ interface FooterProps {
     disabled: boolean;
 }
 
+/**
+ *  Component representing footer of board card
+ *  @category Component
+ */
 export const Footer = ({
     title,
     authorLabel,

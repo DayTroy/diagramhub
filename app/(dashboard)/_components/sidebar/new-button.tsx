@@ -6,6 +6,10 @@ import { CreateOrganization } from "@clerk/nextjs";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Hint } from "@/components/hint";
 
+/**
+ *  Component representing a sidebar add new organization button
+ *  @category Component
+ */
 export const NewButton = () => {
   return (
     <Dialog>

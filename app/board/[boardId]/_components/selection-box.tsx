@@ -3,12 +3,19 @@ import { useSelf, useStorage } from "@/liveblocks.config";
 import { LayerType, Side, XYWH } from "@/types/canvas";
 import { memo } from "react";
 
-interface SelectionBoxProps {
+/**
+ * The props type for {@link SelectionBox}
+ */
+export interface SelectionBoxProps {
   onResizeHandlePointerDown: (corner: Side, initialBounds: XYWH) => void;
 }
 
 const HANDLE_WIDTH = 8;
 
+/**
+ *  Component representing object selection box on canvas
+ *  @category Component
+ */
 export const SelectionBox = memo(
   ({ onResizeHandlePointerDown }: SelectionBoxProps) => {
     const soleLayerId = useSelf((me) =>

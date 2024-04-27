@@ -10,11 +10,18 @@ import { Button } from "@/components/ui/button";
 import { Hint } from "@/components/hint";
 import { BringToFront, SendToBack, Trash2 } from "lucide-react";
 
-interface SelectionToolsProps {
+/**
+ * The props type for {@link SelectionTools}
+ */
+export interface SelectionToolsProps {
     camera: Camera;
     setLastUsedColor: (color: Color) => void;
 };
 
+/**
+ *  Component representing selection tools for selected object on canvas
+ *  @category Component
+ */
 export const SelectionTools = memo(({
     camera,
     setLastUsedColor

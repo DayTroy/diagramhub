@@ -14,6 +14,10 @@ const font = Poppins({
   weight: ["600"],
 });
 
+/**
+ *  Component representing organization sidebar
+ *  @category Component
+ */
 export const OrgSidebar = () => {
 
     const searchParams = useSearchParams();

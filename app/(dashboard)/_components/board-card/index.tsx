@@ -14,8 +14,10 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 
-
-interface BoardCardProps {
+/**
+ * The props type for {@link BoardCard}
+ */
+export interface BoardCardProps {
     id: string;
     title: string;
     authorName: string;
@@ -26,6 +28,10 @@ interface BoardCardProps {
     isFavorite: boolean;
 }
 
+/**
+ *  Component representing board card
+ *  @category Component
+ */
 export const BoardCard = ({
     id,
     title,
@@ -103,6 +109,9 @@ export const BoardCard = ({
     );
 };
 
+/**
+ * @returns Skeleton of board card
+ */
 BoardCard.Skeleton = function BoardCardSkeleton() {
     return (
         <div className="aspect-[100/127] rounded-lg overflow-hidden">

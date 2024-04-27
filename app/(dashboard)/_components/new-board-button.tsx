@@ -7,11 +7,18 @@ import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-interface NewBoardButtonProps {
+/**
+ * The props type for {@link NewBoardButton}
+ */
+export interface NewBoardButtonProps {
     orgId: string;
     disabled?: boolean;
 }
 
+/**
+ *  Component representing add new board button
+ *  @category Component
+ */
 export const NewBoardButton = ({
     orgId,
     disabled

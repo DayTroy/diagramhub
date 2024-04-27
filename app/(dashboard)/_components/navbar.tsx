@@ -8,6 +8,10 @@ import {
 import SearchInput from "./search-input";
 import { InviteButton } from "./invite-button";
 
+/**
+ *  Component representing navigation bar
+ *  @category Component
+ */
 export const Navbar = () => {
   const { organization } = useOrganization();
   return (

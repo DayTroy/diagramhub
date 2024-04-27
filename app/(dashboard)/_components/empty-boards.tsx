@@ -10,6 +10,10 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
+/**
+ *  Component representing empty organization`s boards list
+ *  @category Component
+ */
 export const EmptyBoards = () => {
   const router = useRouter();
   const { organization } = useOrganization();

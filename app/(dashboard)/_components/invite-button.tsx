@@ -3,6 +3,10 @@ import { OrganizationProfile } from "@clerk/nextjs";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
+/**
+ *  Component representing invite button
+ *  @category Component
+ */
 export const InviteButton = () => {
   return (
     <Dialog>

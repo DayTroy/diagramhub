@@ -19,13 +19,20 @@ const calculateFontSize = (width: number, height: number) => {
     return Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth, maxFontSize);
 }
 
-interface NoteProps {
+/**
+ * The props type for {@link Note}
+ */
+export interface NoteProps {
     id: string;
     layer: NoteLayer;
     onPointerDown: (e:React.PointerEvent, id: string) => void;
     selectionColor?: string;
 }
 
+/**
+ *  Component representing note canvas object
+ *  @category Component
+ */
 export const Note = ({
     layer,
     onPointerDown,

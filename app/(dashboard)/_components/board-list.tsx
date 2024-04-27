@@ -9,8 +9,10 @@ import { EmptySearch } from "./empty-search";
 import { BoardCard } from "./board-card";
 import { NewBoardButton } from "./new-board-button";
 
-
-interface BoardListProps {
+/**
+ * The props type for {@link BoardList}
+ */
+export interface BoardListProps {
     orgId: string;
     query: {
         search?: string;
@@ -18,6 +20,10 @@ interface BoardListProps {
     };
 };
 
+/**
+ *  Component representing list of organization`s boards
+ *  @category Component
+ */
 export const BoardList = ({
     orgId,
     query

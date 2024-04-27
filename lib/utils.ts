@@ -14,10 +14,24 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Converts connection id to color.
+ *
+ * @param connectionId id of connection.
+ * @returns color corresponding to the connection id
+ */
 export function connectionIdToColor(connectionId: number):string {
   return COLORS[connectionId % COLORS.length];
 }
 
+/**
+ * Transforms mouse position coordinates of mouse event from
+ * screen space to canvas space.
+ *
+ * @param e mouse event.
+ * @param camera parameters of camera.
+ * @returns mouse position on canvas
+ */
 export function mouseEventToCanvasPoint(
   e: React.MouseEvent,
   camera: Camera
@@ -25,6 +39,14 @@ export function mouseEventToCanvasPoint(
   return screenPointToCanvasPoint({x: e.clientX, y: e.clientY}, camera)
 }
 
+/**
+ * Transforms screen point coordinates from
+ * screen space to canvas space.
+ *
+ * @param p screen point.
+ * @param camera parameters of camera.
+ * @returns canvas point
+ */
 export function screenPointToCanvasPoint(
   p: Point,
   camera: Camera
@@ -35,10 +57,16 @@ export function screenPointToCanvasPoint(
   }
 }
 
+/**
+ * Convert color to css string
+ */
 export function colorToCss(color: Color) {
   return `#${color.r.toString(16).padStart(2, "0")}${color.g.toString(16).padStart(2, "0")}${color.b.toString(16).padStart(2, "0")}`;
 }
 
+/**
+ * Resizes bounds
+ */
 export function resizeBounds(bounds: XYWH, corner: Side, point: Point): XYWH {
   const result = {
     x: bounds.x,
@@ -70,6 +98,9 @@ export function resizeBounds(bounds: XYWH, corner: Side, point: Point): XYWH {
   return result;
 }
 
+/**
+ * Finds all layers on board intersecting with rectangle
+ */
 export function findIntersectingLayersWithRectangle(
   layerIds: readonly string[],
   layers: ReadonlyMap<string, Layer>,
@@ -105,12 +136,18 @@ export function findIntersectingLayersWithRectangle(
   return ids;
 }
 
+/**
+ * Determines contrasting text color for a bg color
+ */
 export function getContrastingTextColor(color: Color) {
   const luminance = 0.299 * color.r + 0.587 * color.g + 0.114 * color.b;
 
   return luminance > 182 ? "black": "white";
 }
 
+/**
+ * Clamps value between min and max (inclusive)
+ */
 export function clamp(val: number, min: number, max: number) {
   return Math.min(Math.max(val, min), max)
 }

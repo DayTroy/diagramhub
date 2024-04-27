@@ -7,6 +7,10 @@ import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 
+/**
+ *  Component representing search input bar
+ *  @category Component
+ */
 export const SearchInput = () => {
 
     const router = useRouter();

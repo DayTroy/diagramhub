@@ -1,12 +1,19 @@
 import { Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface ZoomBarProps {
+/**
+ * The props type for {@link ZoomBar}
+ */
+export interface ZoomBarProps {
     cameraScale: number
     zoomIn: () => void;
     zoomOut: () => void;
 }
 
+/**
+ *  Component representing canvas zoom bar
+ *  @category Component
+ */
 export const ZoomBar = ({
     cameraScale,
     zoomIn,
@@ -33,6 +40,10 @@ export const ZoomBar = ({
     )
 }
 
+/**
+ *  Component representing canvas zoom bar skeleton
+ *  @category Component
+ */
 export const ZoomBarSkeleton = () => {
     return (
         <div className="absolute bottom-2 right-2 h-12 w-[140px] bg-white rounded-md p-1.5 flex gap-x-1 flex-row items-center shadow-md"></div>
