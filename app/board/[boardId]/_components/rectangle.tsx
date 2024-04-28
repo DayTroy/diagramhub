@@ -1,13 +1,20 @@
 import { colorToCss } from "@/lib/utils";
 import { RectangleLayer } from "@/types/canvas";
 
-interface RectangleProps {
+/**
+ * The props type for {@link Rectangle}
+ */
+export interface RectangleProps {
     id: string;
     layer: RectangleLayer;
     onPointerDown: (e: React.PointerEvent, id: string) => void;
     selectionColor?: string;
 }
 
+/**
+ *  Component representing rectangle canvas object
+ *  @category Component
+ */
 export const Rectangle = ({
     id,
     layer,

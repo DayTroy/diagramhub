@@ -1,5 +1,9 @@
 import Image from "next/image";
 
+/**
+ *  Component representing empty favourite boards list
+ *  @category Component
+ */
 export const EmptyFavorites = () => {
     return (
         <div className="h-full flex flex-col items-center justify-center">

@@ -15,7 +15,7 @@ export const useDeleteLayers = () => {
             const index = liveLayersIds.indexOf(id);
 
             if (index !== -1) {
-                liveLayers.delete(index);
+                liveLayers.delete(String(index));
             }
         }
         setMyPresence({ selection: [] }, { addToHistory: true })

@@ -10,13 +10,19 @@ import { Hint } from "@/components/hint";
 import { cn } from "@/lib/utils";
 
 
-
-interface ItemProps {
+/**
+ * The props type for {@link Item}
+ */
+export interface ItemProps {
   id: string;
   name: string;
   imageUrl: string;
 }
 
+/**
+ *  Component representing a sidebar organizations list item
+ *  @category Component
+ */
 export const Item = ({ id, name, imageUrl }: ItemProps) => {
   const { organization } = useOrganization();
   const { setActive } = useOrganizationList();

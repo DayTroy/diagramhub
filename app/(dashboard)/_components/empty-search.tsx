@@ -1,5 +1,9 @@
 import Image from "next/image";
 
+/**
+ *  Component representing empty organization`s boards list after search
+ *  @category Component
+ */
 export const EmptySearch = () => {
     return (
         <div className="h-full flex flex-col items-center justify-center">

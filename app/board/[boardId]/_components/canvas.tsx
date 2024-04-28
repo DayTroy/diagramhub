@@ -26,10 +26,18 @@ import usePreventZoom from "@/lib/prevent_zoom";
 
 const MAX_LAYERS = 100;
 
-interface CanvasProps {
+/**
+ * The props type for {@link Canvas}
+ */
+export interface CanvasProps {
     boardId: string;
 }
 
+/**
+ * Canvas component.
+ * Lets user draw diagrams on it.
+ * @category Component
+ */
 export const Canvas = ({
     boardId,
 }: CanvasProps) => {
@@ -58,6 +66,7 @@ export const Canvas = ({
         document.body.style.overflow = "hidden";
     });
 
+    /** insert a new layer at given position */
     const insertLayer = useMutation((
         { storage, setMyPresence },
         layerType: LayerType.Ellipse | LayerType.Rectangle | LayerType.Text | LayerType.Note,

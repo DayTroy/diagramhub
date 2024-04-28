@@ -6,6 +6,10 @@ import { connectionIdToColor } from "@/lib/utils";
 
 const MAX_SHOWN_USERS = 2;
 
+/**
+ *  Component representing board current paricipants list
+ *  @category Component
+ */
 export const Participants = () => {
 
   const users = useOthers();
@@ -47,6 +51,10 @@ export const Participants = () => {
   )
 }
 
+/**
+ *  Component representing board current paricipants list skeleton
+ *  @category Component
+ */
 export const ParticipantsSkeleton = () => {
     return (
         <div className="absolute h-12 top-2 right-2 bg-white rounded-md p-3 flex items-center shadow-md w-[100px]" />

@@ -14,7 +14,10 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { Menu } from "lucide-react";
 
-interface InfoProps {
+/**
+ * The props type for {@link Info}
+ */
+export interface InfoProps {
   boardId: string;
 
 }
@@ -32,6 +35,10 @@ const TabSeparator = () => {
   )
 }
 
+/**
+ *  Component representing board info panel
+ *  @category Component
+ */
 export const Info = ({
   boardId
 }: InfoProps) => {
@@ -91,6 +98,10 @@ export const Info = ({
   )
 }
 
+/**
+ *  Component representing board info panel skeleton
+ *  @category Component
+ */
 export const InfoSkeleton = () => {
     return (
         <div 

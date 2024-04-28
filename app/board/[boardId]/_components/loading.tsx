@@ -4,7 +4,10 @@ import { ParticipantsSkeleton } from "./participants"
 import { ToolbarSkeleton } from "./toolbar"
 import { ZoomBarSkeleton } from "./zoom-bar"
 
-
+/**
+ *  Component representing board loading page
+ *  @category Component
+ */
 export const Loading = () => {
   return (
     <main
