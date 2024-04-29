@@ -153,46 +153,61 @@ export function clamp(val: number, min: number, max: number) {
   return Math.min(Math.max(val, min), max)
 }
 
-export function isRightSide(point: Point, layer: Layer) {
-  return point.x > (layer.x + layer.width / 2)
+export function getLayerCenter(layer: Layer): Point {
+  return {
+    x: layer.x + layer.width / 2,
+    y: layer.y + layer.height / 2
+  }
 }
 
-export function isLeftSide(point: Point, layer: Layer) {
-  return point.x < (layer.x + layer.width / 2)
+function luRdDiagonal(point: Point, layer: Layer) {
+  return -point.x + layer.x + layer.y;
 }
 
-export function isBottomSide(point: Point, layer: Layer) {
-  return point.y > (layer.y + layer.height / 2)
+function ldRuDiagonal(point: Point, layer: Layer) {
+  return point.x - layer.x - layer.height;
 }
 
-export function isUpperSide(point: Point, layer: Layer) {
-  return point.y < (layer.y + layer.height / 2)
+export function getLineSide(point: Point, layer: Layer) {
+  if (point.y < luRdDiagonal(point, layer)) {
+    if (point.y < ldRuDiagonal(point, layer)) {
+      return Side.Bottom;
+    } else {
+      return Side.Left;
+    }
+  } else {
+    if (point.y > ldRuDiagonal(point, layer)) {
+      return Side.Top;
+    } else {
+      return Side.Right;
+    }
+  }
 }
 
-export function calculateLineOffset(point: Point, layer: Layer) {
-    if (isRightSide(point, layer) && isBottomSide(point, layer)) {
+export function calculateLineOffset(point: Point, layer: Layer): Point {
+  const side = getLineSide(point, layer);
+
+  switch(side) {
+    case Side.Top:
+      return {
+        x: layer.width / 2,
+        y: 0
+      }
+    case Side.Bottom:
+      return {
+        x: layer.width / 2,
+        y: layer.height
+      }
+    case Side.Left:
       return {
         x: 0,
-        y: 0,
+        y: layer.height / 2
       }
-    }
-    if (isRightSide(point, layer) && isUpperSide(point, layer)) {
+    case Side.Right:
       return {
-        x: 0,
-        y: 0,
+        x: layer.width,
+        y: layer.height / 2
       }
-    }
-    if (isLeftSide(point, layer) && isBottomSide(point, layer)) {
-      return {
-        x: 0,
-        y: 0,
-      }
-    }
-    if (isLeftSide(point, layer) && isUpperSide(point, layer)) {
-      return {
-        x: 0,
-        y: 0,
-      }
-    }
+  }
 }
 
