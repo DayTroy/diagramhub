@@ -19,7 +19,12 @@ export enum LayerType {
     Path,
     Text,
     Note,
-    Line
+    
+};
+
+export enum LineType {
+    BaseLine,
+    ArrowLine,
 };
 
 /** Rectangle layer type. */
@@ -80,8 +85,8 @@ export type NoteLayer = {
     value?: string;
 };
 
-export type LineLayer = {
-    type: LayerType;
+export type BaseLine = {
+    type: LineType;
     startLayerId: string;
     endLayerId?: string;
     offsetStart: Point;
@@ -151,7 +156,7 @@ export type CanvasState =
     }
     | {
         mode: CanvasMode.Connecting,
-        line?: LineLayer
+        line?: Line
     }
 
 /** Canvas mode enum. */
@@ -174,6 +179,7 @@ export enum GrabSource {
 };
 
 /** Layer type alias. */
-export type Layer = RectangleLayer | EllipseLayer | PathLayer | TextLayer | NoteLayer | LineLayer;
+export type Layer = RectangleLayer | EllipseLayer | PathLayer | TextLayer | NoteLayer;
+export type Line = BaseLine;
 
 // export type ConnectableLayer = RectangleLayer | EllipseLayer | TextLayer | NoteLayer;

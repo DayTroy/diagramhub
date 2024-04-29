@@ -1,4 +1,4 @@
-import { Camera, Color, Layer, Point, Side, XYWH } from "@/types/canvas";
+import { Camera, Color, Layer, Point, RectangleLayer, Side, XYWH } from "@/types/canvas";
 import { LiveObject } from "@liveblocks/client";
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
@@ -154,19 +154,19 @@ export function clamp(val: number, min: number, max: number) {
 }
 
 export function isRightSide(point: Point, layer: Layer) {
-  return point.x > (layer?.get("x") + layer?.get("width") / 2)
+  return point.x > (layer.x + layer.width / 2)
 }
 
 export function isLeftSide(point: Point, layer: Layer) {
-  return point.x < (layer?.get("x") + layer?.get("width") / 2)
+  return point.x < (layer.x + layer.width / 2)
 }
 
 export function isBottomSide(point: Point, layer: Layer) {
-  return point.y > (layer?.get("y") + layer?.get("height") / 2)
+  return point.y > (layer.y + layer.height / 2)
 }
 
 export function isUpperSide(point: Point, layer: Layer) {
-  return point.y < (layer?.get("y") + layer?.get("height") / 2)
+  return point.y < (layer.y + layer.height / 2)
 }
 
 export function calculateLineOffset(point: Point, layer: Layer) {

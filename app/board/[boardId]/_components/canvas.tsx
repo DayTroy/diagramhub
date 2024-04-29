@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useEffect } from "react";
-import { Camera, CanvasMode, CanvasState, Color, GrabSource, IsLine, LayerType, Point, Side, XYWH } from "@/types/canvas";
+import { Camera, CanvasMode, CanvasState, Color, GrabSource, LayerType, LineType, Point, Side, XYWH } from "@/types/canvas";
 import { Info } from "./info";
 import { Participants } from "./participants";
 import { Toolbar } from "./toolbar";
@@ -25,6 +25,7 @@ import { ZoomBar } from "./zoom-bar";
 import usePreventZoom from "@/lib/prevent_zoom";
 import { useSelectionBounds } from "@/hooks/use-selection-bounds";
 import { LineChart } from "lucide-react";
+import { LinePreview } from "./line-preview";
 
 const MAX_LAYERS = 100;
 
@@ -44,6 +45,7 @@ export const Canvas = ({
     boardId,
 }: CanvasProps) => {
     const layerIds = useStorage((root) => root.layerIds);
+    const lineIds = useStorage((root) => root.lineIds);
 
     const [canvasState, setCanvasState] = useState<CanvasState>({
         mode: CanvasMode.None
@@ -391,7 +393,7 @@ export const Canvas = ({
                 setCanvasState({mode: CanvasMode.None});
             }
         } else if (canvasState.mode === CanvasMode.Connecting) {
-            setCanvasState({mode: CanvasMode.Connecting, layerType: LayerType.Line});
+            setCanvasState({mode: CanvasMode.Connecting, line: canvasState.line});
         } else {
             setCanvasState({
                 mode: CanvasMode.None
@@ -414,27 +416,23 @@ export const Canvas = ({
         e: React.PointerEvent,
         layerId: string,   
     ) => {
+
+
         if (
             canvasState.mode === CanvasMode.Pencil ||
             canvasState.mode === CanvasMode.Inserting
         ) {
             return;
         } else if (canvasState.mode === CanvasMode.Connecting) {
+            
+
             const point = mouseEventToCanvasPoint(e, camera);
             const liveLayers = storage.get("layers");
-            const liveLayer = liveLayers.get(layerId);
+            const liveLayer = liveLayers.get(layerId)?.toObject();
 
             if (!liveLayer) {
                 return;
             }
-
-            // calc offsets
-            // const offset = calculateLineOffset(point, {
-            //     x: liveLayer.x,
-            //     y: liveLayer?.get("y"),
-            //     width: liveLayer?.get("width"),
-            //     height: liveLayer?.get("height") 
-            // });
 
             const offset = calculateLineOffset(point, liveLayer);
 
@@ -446,7 +444,7 @@ export const Canvas = ({
 
             if (!canvasState.line) {
                 const line = {
-                    type: LayerType.Line,
+                    type: LineType.BaseLine,
                     startLayerId: layerId,
                     offsetStart: offset,
                     fill: defaultColor
@@ -456,45 +454,23 @@ export const Canvas = ({
                 canvasState.line.endLayerId = layerId
                 canvasState.line.offsetEnd = offset
 
-                const liveLayersIds = storage.get("layerIds");
+                const liveLineIds = storage.get("lineIds");
+                const liveLines = storage.get("lines");
         
-                const layer = new LiveObject({
+                const line = new LiveObject({
                     ...canvasState.line
                 })
         
-                liveLayersIds.push(layerId)
-                liveLayers.set(layerId, layer)
+                const lineId = nanoid();
+
+                liveLineIds.push(lineId)
+                liveLines.set(lineId, line)
         
-                setMyPresence({ selection: [layerId] }, { addToHistory: true })
+                setMyPresence({ selection: [] }, { addToHistory: true })
                 setCanvasState({ mode: CanvasMode.None })
             }
 
             console.log(canvasState)
-           
-            
-            // if (!liveLayer?.get("lineStart")) {
-            //     liveLayer?.set(
-            //         "lineStart", 
-            //         {
-            //             x: isRightSide(point, liveLayer) && liveLayer.get("x") + liveLayer.get("width"), 
-            //             y: isRightSide(point, liveLayer) && liveLayer.get("y") + liveLayer.get("height") / 2
-            //         }
-            //     )
-            //     const line = document.getElementById('line');
-            //     line?.setAttribute('x1', liveLayer?.get('lineStart')?.x);
-            //     line?.setAttribute('y1', liveLayer?.get('lineStart')?.y);
-            // } else if ((liveLayer?.get("lineStart") && (!liveLayer.get("lineEnd")))) {
-            //     liveLayer?.set(
-            //         "lineEnd", 
-            //         {
-            //             x: isLeftSide(point, liveLayer) && liveLayer.get("x"), 
-            //             y: isLeftSide(point, liveLayer) && liveLayer.get("y") + liveLayer.get("height") / 2
-            //         }
-            //     )
-            //     const line = document.getElementById('line');
-            //     line?.setAttribute('x2', liveLayer?.get('lineEnd')?.x);
-            //     line?.setAttribute('y2', liveLayer?.get('lineEnd')?.y);
-            // }
         } else {
             setCanvasState({ mode: CanvasMode.Translating });
             history.pause();
@@ -574,6 +550,14 @@ export const Canvas = ({
                             selectionColor={layerIdsToColorSelection[layerId]}
                         />
                     ))}
+                    {/* {lineIds.map((lineId) => (
+                        <LinePreview
+                            key={lineId}
+                            id={lineId}
+                            onLinePointerDown={() => {}}
+                            selectionColor={""}
+                        />
+                    ))} */}
                     <SelectionBox
                         onResizeHandlePointerDown={onResizeHandlePointerDown}
                     />
