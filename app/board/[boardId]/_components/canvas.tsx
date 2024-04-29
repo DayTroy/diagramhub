@@ -447,9 +447,7 @@ export const Canvas = ({
                     offsetStart: offset,
                     fill: defaultColor
                 }
-                console.log(line)
-                setCanvasState({ mode: CanvasMode.Connecting, line: line})
-                console.log(canvasState.line)
+                setCanvasState({ mode: CanvasMode.Connecting, line: line })
             } else if (canvasState.line.startLayerId !== layerId) {
                 canvasState.line.endLayerId = layerId
                 canvasState.line.offsetEnd = offset
@@ -468,7 +466,6 @@ export const Canvas = ({
         
                 setMyPresence({ selection: [] }, { addToHistory: true })
                 setCanvasState({ mode: CanvasMode.None })
-                console.log(line)
             }
         } else {
             setCanvasState({ mode: CanvasMode.Translating });
@@ -485,7 +482,7 @@ export const Canvas = ({
         setCanvasState,
         camera,
         history,
-        canvasState.mode
+        canvasState
     ])
 
     const layerIdsToColorSelection = useMemo(() => {
@@ -549,7 +546,7 @@ export const Canvas = ({
                             selectionColor={layerIdsToColorSelection[layerId]}
                         />
                     ))}
-                    {lineIds.map((lineId) => (
+                    {lineIds?.map((lineId) => (
                         <LinePreview
                             key={lineId}
                             id={lineId}
@@ -571,14 +568,6 @@ export const Canvas = ({
                     )}
                     <CursorsPresence />
                 </g>
-                <line 
-                    id="line"
-                    x1="320" 
-                    y1="150" 
-                    x2="600" 
-                    y2="250"
-                    stroke="#000000"
-                />
             </svg>
         </main>
     )

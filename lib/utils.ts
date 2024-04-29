@@ -190,8 +190,8 @@ export function calculateLineOffset(point: Point, layer: Layer): Point {
   switch(side) {
     case Side.Top:
       return {
-        x: layer.width / 2,
-        y: 0
+        x: layer.width,
+        y: layer.height / 2
       }
     case Side.Bottom:
       return {

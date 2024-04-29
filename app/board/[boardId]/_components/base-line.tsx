@@ -1,4 +1,5 @@
 import { colorToCss } from "@/lib/utils";
+import { useStorage } from "@/liveblocks.config";
 import { BaseLine } from "@/types/canvas";
 
 /**
@@ -22,23 +23,24 @@ export const BaseLineComponent = ({
     selectionColor
 
 }: BaseLineProps) => {
-    const { fill } = line;
+    const { offsetStart, offsetEnd, startLayerId, endLayerId } = line;
+
+    if (!offsetEnd || !endLayerId) return null;
+    
+
+    const liveLayers = useStorage((root) => root.layers);
+    const startLayer = liveLayers.get(startLayerId);
+    const endLayer = liveLayers.get(endLayerId);
+
+    if (!startLayer || !endLayer) return null;
 
     return (
-        null
-        // <rect 
-        //     className="drop-shadow-md"
-        //     onPointerDown={(e) => onPointerDown(e, id)}
-        //     style={{
-        //         transform: `translate(${x}px, ${y}px)`,
-        //     }}
-        //     x={0}
-        //     y={0}
-        //     width={width}
-        //     height={height}
-        //     strokeWidth={1}
-        //     fill={fill ? colorToCss(fill) : "#000"}
-        //     stroke={selectionColor || "transparent"}
-        // />
+        <line 
+            x1={startLayer.x + offsetStart.x}
+            y1={startLayer.y + offsetStart.y}
+            x2={endLayer.x + offsetEnd.x}
+            y2={endLayer.y + offsetEnd.y}
+            stroke="#000000"
+        />
     )
 }
