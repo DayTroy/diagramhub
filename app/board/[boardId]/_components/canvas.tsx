@@ -16,7 +16,7 @@ import {
     useOthersMapped
 } from "@/liveblocks.config";
 import { CursorsPresence } from "./cursors-presence";
-import { calculateLineOffset, clamp, connectionIdToColor, findIntersectingLayersWithRectangle, mouseEventToCanvasPoint, resizeBounds, screenPointToCanvasPoint } from "@/lib/utils";
+import { calculateLineOffset, clamp, connectionIdToColor, findIntersectingLayersWithRectangle, getLineSide, mouseEventToCanvasPoint, resizeBounds, screenPointToCanvasPoint } from "@/lib/utils";
 import { LiveObject } from "@liveblocks/client";
 import { LayerPreview } from "./layer-preview";
 import { SelectionBox } from "./selection-box";
@@ -26,6 +26,7 @@ import usePreventZoom from "@/lib/prevent_zoom";
 import { useSelectionBounds } from "@/hooks/use-selection-bounds";
 import { LineChart } from "lucide-react";
 import { LinePreview } from "./line-preview";
+import { Liveblocks } from "@liveblocks/node";
 
 const MAX_LAYERS = 100;
 
@@ -412,9 +413,8 @@ export const Canvas = ({
     const onLayerPointerDown = useMutation((
         { self, setMyPresence, storage },
         e: React.PointerEvent,
-        layerId: string,   
+        layerId: string,
     ) => {
-
 
         if (
             canvasState.mode === CanvasMode.Pencil ||
@@ -422,8 +422,6 @@ export const Canvas = ({
         ) {
             return;
         } else if (canvasState.mode === CanvasMode.Connecting) {
-            
-
             const point = mouseEventToCanvasPoint(e, camera);
             const liveLayers = storage.get("layers");
             const liveLayer = liveLayers.get(layerId)?.toObject();
@@ -454,30 +452,29 @@ export const Canvas = ({
 
                 const liveLineIds = storage.get("lineIds");
                 const liveLines = storage.get("lines");
-        
+
                 const line = new LiveObject({
                     ...canvasState.line
                 })
-        
+
                 const lineId = nanoid();
 
                 liveLineIds.push(lineId)
                 liveLines.set(lineId, line)
-        
+
                 setMyPresence({ selection: [] }, { addToHistory: true })
                 setCanvasState({ mode: CanvasMode.None })
             }
         } else {
             setCanvasState({ mode: CanvasMode.Translating });
             history.pause();
-        
+
             if (!self.presence.selection.includes(layerId)) {
                 setMyPresence({ selection: [layerId ]}, { addToHistory: true });
             }
         }
 
         e.stopPropagation();
-        
     }, [
         setCanvasState,
         camera,

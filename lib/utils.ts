@@ -161,22 +161,22 @@ export function getLayerCenter(layer: Layer): Point {
 }
 
 function luRdDiagonal(point: Point, layer: Layer) {
-  return -point.x + layer.x + layer.y;
+  return (layer.height/layer.width) * (point.x - layer.x) + layer.y;
 }
 
 function ldRuDiagonal(point: Point, layer: Layer) {
-  return point.x - layer.x - layer.height;
+  return (layer.height/layer.width) * (layer.x- point.x) + layer.y +layer.height;
 }
 
 export function getLineSide(point: Point, layer: Layer) {
-  if (point.y < luRdDiagonal(point, layer)) {
-    if (point.y < ldRuDiagonal(point, layer)) {
+  if (point.y > luRdDiagonal(point, layer)) {
+    if (point.y > ldRuDiagonal(point, layer)) {
       return Side.Bottom;
     } else {
       return Side.Left;
     }
   } else {
-    if (point.y > ldRuDiagonal(point, layer)) {
+    if (point.y < ldRuDiagonal(point, layer)) {
       return Side.Top;
     } else {
       return Side.Right;
@@ -190,8 +190,8 @@ export function calculateLineOffset(point: Point, layer: Layer): Point {
   switch(side) {
     case Side.Top:
       return {
-        x: layer.width,
-        y: layer.height / 2
+        x: layer.width / 2,
+        y: 0
       }
     case Side.Bottom:
       return {
