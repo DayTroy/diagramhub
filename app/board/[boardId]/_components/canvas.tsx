@@ -16,7 +16,7 @@ import {
     useOthersMapped
 } from "@/liveblocks.config";
 import { CursorsPresence } from "./cursors-presence";
-import { calculateLineOffset, clamp, connectionIdToColor, findIntersectingLayersWithRectangle, isBottomSide, isLeftSide, isRightSide, isUpperSide, mouseEventToCanvasPoint, resizeBounds, screenPointToCanvasPoint } from "@/lib/utils";
+import { calculateLineOffset, clamp, connectionIdToColor, findIntersectingLayersWithRectangle, mouseEventToCanvasPoint, resizeBounds, screenPointToCanvasPoint } from "@/lib/utils";
 import { LiveObject } from "@liveblocks/client";
 import { LayerPreview } from "./layer-preview";
 import { SelectionBox } from "./selection-box";
@@ -392,9 +392,7 @@ export const Canvas = ({
             {
                 setCanvasState({mode: CanvasMode.None});
             }
-        } else if (canvasState.mode === CanvasMode.Connecting) {
-            setCanvasState({mode: CanvasMode.Connecting, line: canvasState.line});
-        } else {
+        } else if (canvasState.mode !== CanvasMode.Connecting) {
             setCanvasState({
                 mode: CanvasMode.None
             });
@@ -449,6 +447,7 @@ export const Canvas = ({
                     offsetStart: offset,
                     fill: defaultColor
                 }
+                console.log(line)
                 setCanvasState({ mode: CanvasMode.Connecting, line: line})
             } else if (canvasState.line.startLayerId !== layerId) {
                 canvasState.line.endLayerId = layerId
@@ -468,9 +467,8 @@ export const Canvas = ({
         
                 setMyPresence({ selection: [] }, { addToHistory: true })
                 setCanvasState({ mode: CanvasMode.None })
+                console.log(line)
             }
-
-            console.log(canvasState)
         } else {
             setCanvasState({ mode: CanvasMode.Translating });
             history.pause();
@@ -550,14 +548,14 @@ export const Canvas = ({
                             selectionColor={layerIdsToColorSelection[layerId]}
                         />
                     ))}
-                    {/* {lineIds.map((lineId) => (
+                    {lineIds?.map((lineId) => (
                         <LinePreview
                             key={lineId}
                             id={lineId}
                             onLinePointerDown={() => {}}
                             selectionColor={""}
                         />
-                    ))} */}
+                    ))}
                     <SelectionBox
                         onResizeHandlePointerDown={onResizeHandlePointerDown}
                     />
