@@ -449,6 +449,7 @@ export const Canvas = ({
                 }
                 console.log(line)
                 setCanvasState({ mode: CanvasMode.Connecting, line: line})
+                console.log(canvasState.line)
             } else if (canvasState.line.startLayerId !== layerId) {
                 canvasState.line.endLayerId = layerId
                 canvasState.line.offsetEnd = offset
@@ -548,7 +549,7 @@ export const Canvas = ({
                             selectionColor={layerIdsToColorSelection[layerId]}
                         />
                     ))}
-                    {lineIds?.map((lineId) => (
+                    {lineIds.map((lineId) => (
                         <LinePreview
                             key={lineId}
                             id={lineId}
