@@ -4,6 +4,7 @@ import {
     MousePointer2, 
     Pencil, 
     Redo2, 
+    Spline, 
     Square, 
     StickyNote, 
     Type, 
@@ -105,6 +106,12 @@ export const Toolbar = ({
                     canvasState.mode === CanvasMode.Inserting &&
                     canvasState.layerType === LayerType.Ellipse
                 }
+            />
+            <ToolButton 
+                label="Соединить"
+                icon={Spline}
+                onClick={() => setCanvasState({ mode: CanvasMode.Connecting })}
+                isActive={ canvasState.mode === CanvasMode.Connecting  }
             />
             {/* <ToolButton 
                 label="Карандаш"

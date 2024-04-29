@@ -19,6 +19,7 @@ export enum LayerType {
     Path,
     Text,
     Note,
+    Line
 };
 
 /** Rectangle layer type. */
@@ -30,6 +31,8 @@ export type RectangleLayer = {
     width: number;
     fill: Color;
     value?: string;
+    lineStart?: Point;
+    lineEnd?: Point;
 };
 
 /** Ellipse layer type. */
@@ -76,6 +79,20 @@ export type NoteLayer = {
     fill: Color;
     value?: string;
 };
+
+export type LineLayer = {
+    type: LayerType;
+    startLayerId: string;
+    endLayerId?: string;
+    offsetStart: Point;
+    offsetEnd?: Point;
+    fill: Color;
+    value?: string;
+};
+
+// export function IsLine(layer: Layer){
+//     return (<LineLayer>layer).startLayerId !== undefined
+// }
 
 /** Point type. */
 export type Point = {
@@ -132,6 +149,10 @@ export type CanvasState =
         mode: CanvasMode.Grab,
         source: GrabSource;
     }
+    | {
+        mode: CanvasMode.Connecting,
+        line?: LineLayer
+    }
 
 /** Canvas mode enum. */
 export enum CanvasMode {
@@ -142,7 +163,8 @@ export enum CanvasMode {
     Inserting,
     Resizing,
     Pencil,
-    Grab
+    Grab,
+    Connecting,
 };
 
 /** Grab source enum. */
@@ -152,4 +174,6 @@ export enum GrabSource {
 };
 
 /** Layer type alias. */
-export type Layer = RectangleLayer | EllipseLayer | PathLayer | TextLayer | NoteLayer;
+export type Layer = RectangleLayer | EllipseLayer | PathLayer | TextLayer | NoteLayer | LineLayer;
+
+// export type ConnectableLayer = RectangleLayer | EllipseLayer | TextLayer | NoteLayer;
