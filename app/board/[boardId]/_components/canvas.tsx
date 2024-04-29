@@ -64,6 +64,7 @@ export const Canvas = ({
     usePreventZoom();
     useEffect(() => {
         document.body.style.overflow = "hidden";
+        document.body.style.overscrollBehaviorX = "none"
     });
 
     /** insert a new layer at given position */
