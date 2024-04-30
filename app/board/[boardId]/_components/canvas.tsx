@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useEffect } from "react";
-import { Camera, CanvasMode, CanvasState, Color, GrabSource, LayerType, Point, Side, XYWH } from "@/types/canvas";
+import { Camera, CanvasMode, CanvasState, Color, GrabSource, LayerType, LineType, Point, Side, XYWH } from "@/types/canvas";
 import { Info } from "./info";
 import { Participants } from "./participants";
 import { Toolbar } from "./toolbar";
@@ -16,13 +16,17 @@ import {
     useOthersMapped
 } from "@/liveblocks.config";
 import { CursorsPresence } from "./cursors-presence";
-import { clamp, connectionIdToColor, findIntersectingLayersWithRectangle, mouseEventToCanvasPoint, resizeBounds, screenPointToCanvasPoint } from "@/lib/utils";
+import { calculateLineOffset, clamp, connectionIdToColor, findIntersectingLayersWithRectangle, getLineSide, mouseEventToCanvasPoint, resizeBounds, screenPointToCanvasPoint } from "@/lib/utils";
 import { LiveObject } from "@liveblocks/client";
 import { LayerPreview } from "./layer-preview";
 import { SelectionBox } from "./selection-box";
 import { SelectionTools } from "./selection-tools";
 import { ZoomBar } from "./zoom-bar";
 import usePreventZoom from "@/lib/prevent_zoom";
+import { useSelectionBounds } from "@/hooks/use-selection-bounds";
+import { LineChart } from "lucide-react";
+import { LinePreview } from "./line-preview";
+import { Liveblocks } from "@liveblocks/node";
 
 const MAX_LAYERS = 100;
 
@@ -42,6 +46,7 @@ export const Canvas = ({
     boardId,
 }: CanvasProps) => {
     const layerIds = useStorage((root) => root.layerIds);
+    const lineIds = useStorage((root) => root.lineIds);
 
     const [canvasState, setCanvasState] = useState<CanvasState>({
         mode: CanvasMode.None
@@ -363,7 +368,7 @@ export const Canvas = ({
 
         if (e.button === 1) {
             setCanvasState({mode: CanvasMode.Grab, source: GrabSource.ScrollWheelPress})
-        } else if (canvasState.mode !== CanvasMode.Grab) {
+        } else if (canvasState.mode !== CanvasMode.Grab && canvasState.mode !== CanvasMode.Connecting) {
             setCanvasState({ origin: pointerCanvasPos, mode: CanvasMode.Pressing });
         }
     }, [camera, canvasState, setCanvasState])
@@ -375,7 +380,7 @@ export const Canvas = ({
         const point = mouseEventToCanvasPoint(e, camera);
 
         if (
-            canvasState.mode === CanvasMode.None ||
+            // canvasState.mode === CanvasMode.None ||
             canvasState.mode === CanvasMode.Pressing
         ) {
             unselectLayers();
@@ -389,7 +394,7 @@ export const Canvas = ({
             {
                 setCanvasState({mode: CanvasMode.None});
             }
-        } else {
+        } else if (canvasState.mode !== CanvasMode.Connecting) {
             setCanvasState({
                 mode: CanvasMode.None
             });
@@ -407,30 +412,75 @@ export const Canvas = ({
     const selections = useOthersMapped((other) => other.presence.selection);
 
     const onLayerPointerDown = useMutation((
-        { self, setMyPresence },
+        { self, setMyPresence, storage },
         e: React.PointerEvent,
         layerId: string,
     ) => {
+
         if (
             canvasState.mode === CanvasMode.Pencil ||
             canvasState.mode === CanvasMode.Inserting
         ) {
             return;
+        } else if (canvasState.mode === CanvasMode.Connecting) {
+            const point = mouseEventToCanvasPoint(e, camera);
+            const liveLayers = storage.get("layers");
+            const liveLayer = liveLayers.get(layerId)?.toObject();
+
+            if (!liveLayer) {
+                return;
+            }
+
+            const offset = calculateLineOffset(point, liveLayer);
+
+            const defaultColor =  {
+                r: 0,
+                g: 0,
+                b: 0
+            }
+
+            if (!canvasState.line) {
+                const line = {
+                    type: LineType.BaseLine,
+                    startLayerId: layerId,
+                    offsetStart: offset,
+                    fill: defaultColor
+                }
+                setCanvasState({ mode: CanvasMode.Connecting, line: line })
+            } else if (canvasState.line.startLayerId !== layerId) {
+                canvasState.line.endLayerId = layerId
+                canvasState.line.offsetEnd = offset
+
+                const liveLineIds = storage.get("lineIds");
+                const liveLines = storage.get("lines");
+
+                const line = new LiveObject({
+                    ...canvasState.line
+                })
+
+                const lineId = nanoid();
+
+                liveLineIds.push(lineId)
+                liveLines.set(lineId, line)
+
+                setMyPresence({ selection: [] }, { addToHistory: true })
+                setCanvasState({ mode: CanvasMode.None })
+            }
+        } else {
+            setCanvasState({ mode: CanvasMode.Translating });
+            history.pause();
+
+            if (!self.presence.selection.includes(layerId)) {
+                setMyPresence({ selection: [layerId ]}, { addToHistory: true });
+            }
         }
 
-        history.pause();
         e.stopPropagation();
-
-        if (!self.presence.selection.includes(layerId)) {
-            setMyPresence({ selection: [layerId ]}, { addToHistory: true });
-        }
-
-        setCanvasState({ mode: CanvasMode.Translating });
     }, [
         setCanvasState,
         camera,
         history,
-        canvasState.mode
+        canvasState
     ])
 
     const layerIdsToColorSelection = useMemo(() => {
@@ -453,7 +503,7 @@ export const Canvas = ({
             onPointerLeave={onPointerLeaveWindow}
             onPointerUp={onPointerUp}
         >
-            <Info boardId={boardId} />
+            {/* <Info boardId={boardId} /> */}
             <Participants />
             <Toolbar
                 canvasState={canvasState}
@@ -473,6 +523,7 @@ export const Canvas = ({
                 zoomOut={() => zoomToCenter(false)}
             />
             <svg
+                id="canvas"
                 className="h-[100vh] w-[100vw]"
                 onWheel={onWheel}
                 onPointerMove={onPointerMove}
@@ -491,6 +542,14 @@ export const Canvas = ({
                             id={layerId}
                             onLayerPointerDown={onLayerPointerDown}
                             selectionColor={layerIdsToColorSelection[layerId]}
+                        />
+                    ))}
+                    {lineIds?.map((lineId) => (
+                        <LinePreview
+                            key={lineId}
+                            id={lineId}
+                            onLinePointerDown={() => {}}
+                            selectionColor={""}
                         />
                     ))}
                     <SelectionBox

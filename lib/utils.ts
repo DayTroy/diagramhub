@@ -1,4 +1,5 @@
-import { Camera, Color, Layer, Point, Side, XYWH } from "@/types/canvas";
+import { Camera, Color, Layer, Point, RectangleLayer, Side, XYWH } from "@/types/canvas";
+import { LiveObject } from "@liveblocks/client";
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -151,3 +152,62 @@ export function getContrastingTextColor(color: Color) {
 export function clamp(val: number, min: number, max: number) {
   return Math.min(Math.max(val, min), max)
 }
+
+export function getLayerCenter(layer: Layer): Point {
+  return {
+    x: layer.x + layer.width / 2,
+    y: layer.y + layer.height / 2
+  }
+}
+
+function luRdDiagonal(point: Point, layer: Layer) {
+  return (layer.height/layer.width) * (point.x - layer.x) + layer.y;
+}
+
+function ldRuDiagonal(point: Point, layer: Layer) {
+  return (layer.height/layer.width) * (layer.x- point.x) + layer.y +layer.height;
+}
+
+export function getLineSide(point: Point, layer: Layer) {
+  if (point.y > luRdDiagonal(point, layer)) {
+    if (point.y > ldRuDiagonal(point, layer)) {
+      return Side.Bottom;
+    } else {
+      return Side.Left;
+    }
+  } else {
+    if (point.y < ldRuDiagonal(point, layer)) {
+      return Side.Top;
+    } else {
+      return Side.Right;
+    }
+  }
+}
+
+export function calculateLineOffset(point: Point, layer: Layer): Point {
+  const side = getLineSide(point, layer);
+
+  switch(side) {
+    case Side.Top:
+      return {
+        x: layer.width / 2,
+        y: 0
+      }
+    case Side.Bottom:
+      return {
+        x: layer.width / 2,
+        y: layer.height
+      }
+    case Side.Left:
+      return {
+        x: 0,
+        y: layer.height / 2
+      }
+    case Side.Right:
+      return {
+        x: layer.width,
+        y: layer.height / 2
+      }
+  }
+}
+
