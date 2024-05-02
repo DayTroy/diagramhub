@@ -19,7 +19,6 @@ export enum LayerType {
     Path,
     Text,
     Note,
-    
 };
 
 export enum LineType {
@@ -94,10 +93,6 @@ export type BaseLine = {
     fill: Color;
     value?: string;
 };
-
-// export function IsLine(layer: Layer){
-//     return (<LineLayer>layer).startLayerId !== undefined
-// }
 
 /** Point type. */
 export type Point = {

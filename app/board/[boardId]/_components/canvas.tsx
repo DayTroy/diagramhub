@@ -53,7 +53,7 @@ export const Canvas = ({
     const MAX_CAM_SCALE = 2;
     const MIN_CAM_SCALE = 0.2;
 
-    const [cursorPosition, setCursorPosition] = useState<Point>({ x: 0, y: 0});
+    const [mouseScreenPosition, setMouseScreenPosition] = useState<Point>({ x: 0, y: 0});
 
     const [lastUsedColor, setLastUsedColor] = useState<Color>({
         r: 0,
@@ -71,7 +71,9 @@ export const Canvas = ({
         document.body.style.overscrollBehaviorX = "none"
     });
 
-    /** insert a new layer at given position */
+    /**
+     * Insert a new layer at given position.
+    */
     const insertLayer = useMutation((
         { storage, setMyPresence },
         layerType: LayerType.Ellipse | LayerType.Rectangle | LayerType.Text | LayerType.Note,
@@ -105,15 +107,10 @@ export const Canvas = ({
 
     const translateSelectedLayers = useMutation((
         { storage, self },
-        pointerDeltaSC: Point
+        pointerDeltaCC: Point
     ) => {
         if( canvasState.mode !== CanvasMode.Translating) {
             return;
-        }
-
-        const offset = {
-            x: pointerDeltaSC.x / camera.scale,
-            y: pointerDeltaSC.y / camera.scale,
         }
 
         const liveLayers = storage.get("layers");
@@ -123,13 +120,12 @@ export const Canvas = ({
 
             if (layer) {
                 layer.update({
-                    x: layer.get("x") + offset.x,
-                    y: layer.get("y") + offset.y,
+                    x: layer.get("x") + pointerDeltaCC.x,
+                    y: layer.get("y") + pointerDeltaCC.y,
                 })
             }
         }
         setCanvasState({ mode: CanvasMode.Translating });
-
     }, [
         canvasState,
     ]);
@@ -212,34 +208,39 @@ export const Canvas = ({
 
     /**
      * Handles mouse position change.
+     * Should be called after the camera zooms or when the user moves the mouse.
      *
-     * @param newMouseCanvasPos new mouse position in canvas coordinates
      * @param newMouseScreenPos new mouse position in screen coordinates
+     * @param newCamData new camera parameters
      * @param buttons Pressed mouse btns (same as MouseEvent.buttons)
      */
     const handleMousePositionChange = useMutation((
         { setMyPresence },
-        newMouseCanvasPos: Point,
         newMouseScreenPos: Point,
+        newCamData: Camera,
         buttons: number,
     ) => {
+        const newMouseCanvasPos = screenPointToCanvasPoint(newMouseScreenPos, newCamData);
+
         if (canvasState.mode === CanvasMode.Pressing) {
             startMultiSelection(newMouseCanvasPos, canvasState.origin);
         } else if (canvasState.mode === CanvasMode.SelectionNet) {
             updateSelectionNet(newMouseCanvasPos, canvasState.origin)
         } else if (canvasState.mode === CanvasMode.Translating) {
-            translateSelectedLayers(pointsDifference(newMouseScreenPos, cursorPosition));
+            const prevMouseCanvasPos = screenPointToCanvasPoint(mouseScreenPosition, camera)
+            translateSelectedLayers(pointsDifference(newMouseCanvasPos, prevMouseCanvasPos));
         } else if (canvasState.mode === CanvasMode.Resizing) {
             resizeSelectedLayer(newMouseCanvasPos)
         } else if (canvasState.mode === CanvasMode.Grab && buttons !== 0) {
-            grabUpdateCameraPosition(pointsDifference(newMouseScreenPos, cursorPosition))
+            grabUpdateCameraPosition(pointsDifference(newMouseScreenPos, mouseScreenPosition))
         }
 
         setMyPresence({ cursor:newMouseCanvasPos });
-        setCursorPosition(newMouseScreenPos)
+        setMouseScreenPosition(newMouseScreenPos)
     }, [
         canvasState,
-        cursorPosition,
+        mouseScreenPosition,
+        camera,
         resizeSelectedLayer,
         translateSelectedLayers
     ])
@@ -321,8 +322,7 @@ export const Canvas = ({
             }
         }
 
-        const pointerCanvasPos = mouseEventToCanvasPoint(e, newCamData)
-        handleMousePositionChange(pointerCanvasPos, getMousePosition(e), e.buttons)
+        handleMousePositionChange(getMousePosition(e), newCamData, e.buttons)
     }, [
         canvasState,
         handleMousePositionChange,
@@ -336,17 +336,16 @@ export const Canvas = ({
         if (e.ctrlKey) {
             let camData = undefined;
             if (e.code == "Equal" || e.code == "NumpadAdd") {
-                camData = zoomToCenter(true);
+                camData = zoomCamera(0.1, mouseScreenPosition);
             } else if (e.code == "Minus" || e.code == "NumpadSubtract") {
-                camData = zoomToCenter(false);
+                camData = zoomCamera(-0.1, mouseScreenPosition);
             }
 
             if (camData) {
-                const mouseCanvasPos = screenPointToCanvasPoint(cursorPosition, camData)
-                handleMousePositionChange(mouseCanvasPos, cursorPosition, 0)
+                handleMousePositionChange(mouseScreenPosition, camData, 0)
             }
         }
-    }, [zoomToCenter, handleMousePositionChange, cursorPosition])
+    }, [handleMousePositionChange, zoomCamera, mouseScreenPosition])
 
     const onPointerMove = useCallback((
         e: React.PointerEvent
@@ -354,8 +353,7 @@ export const Canvas = ({
         e.preventDefault();
         console.log("Move");
 
-        const pointerCanvasPos = mouseEventToCanvasPoint(e, camera);
-        handleMousePositionChange(pointerCanvasPos, getMousePosition(e), e.buttons)
+        handleMousePositionChange(getMousePosition(e), camera, e.buttons)
     }, [
         camera,
         handleMousePositionChange
@@ -383,7 +381,7 @@ export const Canvas = ({
         { setMyPresence },
         e: React.PointerEvent,
     ) => {
-        setCursorPosition({x: e.clientX, y: e.clientY});
+        setMouseScreenPosition({x: e.clientX, y: e.clientY});
         const pointerCanvasPos = mouseEventToCanvasPoint(e, camera);
 
         if (canvasState.mode === CanvasMode.Inserting) {
