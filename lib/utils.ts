@@ -211,3 +211,27 @@ export function calculateLineOffset(point: Point, layer: Layer): Point {
   }
 }
 
+/**
+ * Calculates difference between points (a - b).
+ *
+ * @returns (a.x - b.x; a.y - b.y)
+ */
+export function pointsDifference(a: Point, b: Point): Point {
+  return {
+    x: a.x - b.x,
+    y: a.y - b.y,
+  }
+}
+
+/**
+ * Returns mouse position as {@link Point} from React.MouseEvent.
+ *
+ * @returns (e.clientX; e.clienY)
+ */
+export function getMousePosition(e: React.MouseEvent): Point {
+  return {
+    x: e.clientX,
+    y: e.clientY,
+  }
+}
+

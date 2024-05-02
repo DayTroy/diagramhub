@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo, useState, useEffect } from "react";
 import { Camera, CanvasMode, CanvasState, Color, GrabSource, LayerType, LineType, Point, Side, XYWH } from "@/types/canvas";
-import { Info } from "./info";
 import { Participants } from "./participants";
 import { Toolbar } from "./toolbar";
 import { nanoid } from "nanoid"
@@ -16,17 +15,15 @@ import {
     useOthersMapped
 } from "@/liveblocks.config";
 import { CursorsPresence } from "./cursors-presence";
-import { calculateLineOffset, clamp, connectionIdToColor, findIntersectingLayersWithRectangle, getLineSide, mouseEventToCanvasPoint, resizeBounds, screenPointToCanvasPoint } from "@/lib/utils";
+import { calculateLineOffset, clamp, connectionIdToColor, findIntersectingLayersWithRectangle, getMousePosition, mouseEventToCanvasPoint, pointsDifference, resizeBounds, screenPointToCanvasPoint } from "@/lib/utils";
 import { LiveObject } from "@liveblocks/client";
 import { LayerPreview } from "./layer-preview";
 import { SelectionBox } from "./selection-box";
 import { SelectionTools } from "./selection-tools";
 import { ZoomBar } from "./zoom-bar";
 import usePreventZoom from "@/lib/prevent_zoom";
-import { useSelectionBounds } from "@/hooks/use-selection-bounds";
-import { LineChart } from "lucide-react";
 import { LinePreview } from "./line-preview";
-import { Liveblocks } from "@liveblocks/node";
+import { Info } from "./info";
 
 const MAX_LAYERS = 100;
 
@@ -55,6 +52,8 @@ export const Canvas = ({
     const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, scale: 1 });
     const MAX_CAM_SCALE = 2;
     const MIN_CAM_SCALE = 0.2;
+
+    const [cursorPosition, setCursorPosition] = useState<Point>({ x: 0, y: 0});
 
     const [lastUsedColor, setLastUsedColor] = useState<Color>({
         r: 0,
@@ -85,7 +84,6 @@ export const Canvas = ({
         }
 
         const liveLayersIds = storage.get("layerIds");
-
         const layerId = nanoid();
 
         const layer = new LiveObject({
@@ -212,27 +210,36 @@ export const Canvas = ({
         }))
     }, []);
 
-    const handlePointerPositionChange = useMutation((
+    /**
+     * Handles mouse position change.
+     *
+     * @param newMouseCanvasPos new mouse position in canvas coordinates
+     * @param newMouseScreenPos new mouse position in screen coordinates
+     * @param buttons Pressed mouse btns (same as MouseEvent.buttons)
+     */
+    const handleMousePositionChange = useMutation((
         { setMyPresence },
-        newPointerPositionCC: Point,
-        e: React.MouseEvent,
+        newMouseCanvasPos: Point,
+        newMouseScreenPos: Point,
+        buttons: number,
     ) => {
-
         if (canvasState.mode === CanvasMode.Pressing) {
-            startMultiSelection(newPointerPositionCC, canvasState.origin);
+            startMultiSelection(newMouseCanvasPos, canvasState.origin);
         } else if (canvasState.mode === CanvasMode.SelectionNet) {
-            updateSelectionNet(newPointerPositionCC, canvasState.origin)
+            updateSelectionNet(newMouseCanvasPos, canvasState.origin)
         } else if (canvasState.mode === CanvasMode.Translating) {
-            translateSelectedLayers({x: e.movementX, y: e.movementY});
+            translateSelectedLayers(pointsDifference(newMouseScreenPos, cursorPosition));
         } else if (canvasState.mode === CanvasMode.Resizing) {
-            resizeSelectedLayer(newPointerPositionCC)
-        } else if (canvasState.mode === CanvasMode.Grab && e.buttons !== 0) {
-            grabUpdateCameraPosition({x: e.movementX, y: e.movementY})
+            resizeSelectedLayer(newMouseCanvasPos)
+        } else if (canvasState.mode === CanvasMode.Grab && buttons !== 0) {
+            grabUpdateCameraPosition(pointsDifference(newMouseScreenPos, cursorPosition))
         }
 
-        setMyPresence({ cursor:newPointerPositionCC });
+        setMyPresence({ cursor:newMouseCanvasPos });
+        setCursorPosition(newMouseScreenPos)
     }, [
         canvasState,
+        cursorPosition,
         resizeSelectedLayer,
         translateSelectedLayers
     ])
@@ -252,7 +259,7 @@ export const Canvas = ({
     const zoomCamera = useCallback((
         amount: number,
         zoomCenterSC: Point
-    ) => {
+    ): Camera => {
         const newCamData = {
             x: camera.x,
             y: camera.y,
@@ -273,11 +280,11 @@ export const Canvas = ({
 
     const zoomToCenter = useCallback((
         zoomIn: Boolean
-    ) => {
+    ): Camera => {
         const screenCenter = {x: window.innerWidth/2, y: window.innerHeight/2};
         const amount = zoomIn ? 0.1 : -0.1;
 
-        zoomCamera(amount, screenCenter);
+        return zoomCamera(amount, screenCenter);
     }, [zoomCamera])
 
     const moveCamera = useCallback((
@@ -315,25 +322,43 @@ export const Canvas = ({
         }
 
         const pointerCanvasPos = mouseEventToCanvasPoint(e, newCamData)
-        handlePointerPositionChange(pointerCanvasPos, e)
+        handleMousePositionChange(pointerCanvasPos, getMousePosition(e), e.buttons)
     }, [
         canvasState,
-        handlePointerPositionChange,
+        handleMousePositionChange,
         moveCamera,
         zoomCamera
     ])
+
+    const onKeyDown = useCallback((
+        e: React.KeyboardEvent
+    ) => {
+        if (e.ctrlKey) {
+            let camData = undefined;
+            if (e.code == "Equal" || e.code == "NumpadAdd") {
+                camData = zoomToCenter(true);
+            } else if (e.code == "Minus" || e.code == "NumpadSubtract") {
+                camData = zoomToCenter(false);
+            }
+
+            if (camData) {
+                const mouseCanvasPos = screenPointToCanvasPoint(cursorPosition, camData)
+                handleMousePositionChange(mouseCanvasPos, cursorPosition, 0)
+            }
+        }
+    }, [zoomToCenter, handleMousePositionChange, cursorPosition])
 
     const onPointerMove = useCallback((
         e: React.PointerEvent
     ) => {
         e.preventDefault();
+        console.log("Move");
 
         const pointerCanvasPos = mouseEventToCanvasPoint(e, camera);
-
-        handlePointerPositionChange(pointerCanvasPos, e)
+        handleMousePositionChange(pointerCanvasPos, getMousePosition(e), e.buttons)
     }, [
         camera,
-        handlePointerPositionChange
+        handleMousePositionChange
     ])
 
     const onPointerLeaveWindow = useCallback(() => {
@@ -358,6 +383,7 @@ export const Canvas = ({
         { setMyPresence },
         e: React.PointerEvent,
     ) => {
+        setCursorPosition({x: e.clientX, y: e.clientY});
         const pointerCanvasPos = mouseEventToCanvasPoint(e, camera);
 
         if (canvasState.mode === CanvasMode.Inserting) {
@@ -500,8 +526,11 @@ export const Canvas = ({
     return (
         <main
             className="h-full w-full relative bg-neutral-100 touch-none"
-            onPointerLeave={onPointerLeaveWindow}
             onPointerUp={onPointerUp}
+            onPointerMove={onPointerMove}
+            onPointerLeave={onPointerLeaveWindow}
+            onKeyDown={onKeyDown}
+            tabIndex={-1}
         >
             {/* <Info boardId={boardId} /> */}
             <Participants />
@@ -526,7 +555,6 @@ export const Canvas = ({
                 id="canvas"
                 className="h-[100vh] w-[100vw]"
                 onWheel={onWheel}
-                onPointerMove={onPointerMove}
                 onPointerLeave={onPointerLeaveCanvas}
                 onPointerDown={onPointerDown}
             >
