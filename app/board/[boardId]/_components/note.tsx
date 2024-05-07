@@ -2,7 +2,7 @@ import { Kalam } from 'next/font/google';
 import ContentEditable, {ContentEditableEvent} from 'react-contenteditable';
 
 import { cn, colorToCss, getContrastingTextColor } from '@/lib/utils';
-import { NoteLayer } from '@/types/canvas';
+import { Layer } from '@/types/canvas';
 import { useMutation } from '@/liveblocks.config';
 
 const font = Kalam({
@@ -24,7 +24,7 @@ const calculateFontSize = (width: number, height: number) => {
  */
 export interface NoteProps {
     id: string;
-    layer: NoteLayer;
+    layer: Layer;
     onPointerDown: (e:React.PointerEvent, id: string) => void;
     selectionColor?: string;
 }

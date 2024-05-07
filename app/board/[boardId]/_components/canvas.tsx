@@ -24,6 +24,8 @@ import { ZoomBar } from "./zoom-bar";
 import usePreventZoom from "@/lib/prevent_zoom";
 import { LinePreview } from "./line-preview";
 import { Info } from "./info";
+import { Button } from "@/components/ui/button";
+import { BadgeX } from "lucide-react";
 
 const MAX_LAYERS = 100;
 
@@ -76,7 +78,7 @@ export const Canvas = ({
     */
     const insertLayer = useMutation((
         { storage, setMyPresence },
-        layerType: LayerType.Ellipse | LayerType.Rectangle | LayerType.Text | LayerType.Note,
+        layerType: LayerType,
         positionCC: Point
     ) => {
         const liveLayers = storage.get("layers");
@@ -125,7 +127,6 @@ export const Canvas = ({
                 })
             }
         }
-        setCanvasState({ mode: CanvasMode.Translating });
     }, [
         canvasState,
     ]);
@@ -351,7 +352,6 @@ export const Canvas = ({
         e: React.PointerEvent
     ) => {
         e.preventDefault();
-        console.log("Move");
 
         handleMousePositionChange(getMousePosition(e), camera, e.buttons)
     }, [
@@ -490,13 +490,15 @@ export const Canvas = ({
                 setMyPresence({ selection: [] }, { addToHistory: true })
                 setCanvasState({ mode: CanvasMode.None })
             }
-        } else {
+        } else  if(e.button == 0) {
             setCanvasState({ mode: CanvasMode.Translating });
             history.pause();
 
             if (!self.presence.selection.includes(layerId)) {
                 setMyPresence({ selection: [layerId ]}, { addToHistory: true });
             }
+        } else if (e.button == 1) {
+            setCanvasState({mode: CanvasMode.Grab, source: GrabSource.ScrollWheelPress})
         }
 
         e.stopPropagation();
@@ -520,6 +522,31 @@ export const Canvas = ({
 
          return layerIdsToColorSelection;
     }, [selections]);
+
+    const onLinePointerDown = useMutation((
+        { },
+        e: React.PointerEvent,
+        lineId: string,
+    ) => {
+        console.log("Line pointer down (%s)", lineId)
+    }, [])
+
+    const removeAllLines = useMutation((
+        { storage }
+    ) => {
+        const liveLines = storage.get("lines");
+        const liveLineIds = storage.get("lineIds");
+
+        for (const id of lineIds) {
+            liveLines.delete(id);
+
+            const index = liveLineIds.indexOf(id);
+
+            if (index !== -1) {
+                liveLineIds.delete(index);
+            }
+        }
+    }, [lineIds])
 
     return (
         <main
@@ -549,9 +576,18 @@ export const Canvas = ({
                 zoomIn={() => zoomToCenter(true)}
                 zoomOut={() => zoomToCenter(false)}
             />
+            {/* Debug lines remove button (delete it and removeAllLines function later) */}
+            <Button
+                className= "absolute bottom-2 right-2 bg-white rounded-md h-12 w-12"
+                onClick={removeAllLines}
+                size="icon"
+                variant="board"
+            >
+                <BadgeX />
+            </Button>
             <svg
                 id="canvas"
-                className="h-[100vh] w-[100vw]"
+                className="h-[100vh] w-[100vw] select-none"
                 onWheel={onWheel}
                 onPointerLeave={onPointerLeaveCanvas}
                 onPointerDown={onPointerDown}
@@ -574,7 +610,7 @@ export const Canvas = ({
                         <LinePreview
                             key={lineId}
                             id={lineId}
-                            onLinePointerDown={() => {}}
+                            onLinePointerDown={onLinePointerDown}
                             selectionColor={""}
                         />
                     ))}

@@ -26,14 +26,14 @@ export const LinePreview = memo(({
     switch(line.type) {
         case LineType.BaseLine:
             return (
-                <BaseLineComponent 
+                <BaseLineComponent
                     id={id}
                     line={line}
                     onPointerDown={onLinePointerDown}
                     selectionColor={selectionColor}
                 />
             );
-        default: 
+        default:
             console.warn("Unknown line type");
             return null
     }

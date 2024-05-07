@@ -12,88 +12,6 @@ export type Camera = {
     scale: number;
 }
 
-/** Layer type. */
-export enum LayerType {
-    Rectangle,
-    Ellipse,
-    Path,
-    Text,
-    Note,
-};
-
-export enum LineType {
-    BaseLine,
-    ArrowLine,
-};
-
-/** Rectangle layer type. */
-export type RectangleLayer = {
-    type: LayerType.Rectangle;
-    x: number;
-    y: number;
-    height: number;
-    width: number;
-    fill: Color;
-    value?: string;
-    lineStart?: Point;
-    lineEnd?: Point;
-};
-
-/** Ellipse layer type. */
-export type EllipseLayer = {
-    type: LayerType.Ellipse;
-    x: number;
-    y: number;
-    height: number;
-    width: number;
-    fill: Color;
-    value?: string;
-};
-
-/** Path layer type. */
-export type PathLayer = {
-    type: LayerType.Path;
-    x: number;
-    y: number;
-    height: number;
-    width: number;
-    fill: Color;
-    points: number[][];
-    value?: string;
-};
-
-/** Text layer type. */
-export type TextLayer = {
-    type: LayerType.Text;
-    x: number;
-    y: number;
-    height: number;
-    width: number;
-    fill: Color;
-    value?: string;
-};
-
-/** Note layer type. */
-export type NoteLayer = {
-    type: LayerType.Note;
-    x: number;
-    y: number;
-    height: number;
-    width: number;
-    fill: Color;
-    value?: string;
-};
-
-export type BaseLine = {
-    type: LineType;
-    startLayerId: string;
-    endLayerId?: string;
-    offsetStart: Point;
-    offsetEnd?: Point;
-    fill: Color;
-    value?: string;
-};
-
 /** Point type. */
 export type Point = {
     x: number;
@@ -135,7 +53,7 @@ export type CanvasState =
     }
     | {
         mode: CanvasMode.Inserting,
-        layerType: LayerType.Ellipse | LayerType.Rectangle | LayerType.Text | LayerType.Note;
+        layerType: LayerType;
     }
     | {
         mode: CanvasMode.Resizing,
@@ -173,8 +91,44 @@ export enum GrabSource {
     ScrollWheelPress
 };
 
-/** Layer type alias. */
-export type Layer = RectangleLayer | EllipseLayer | PathLayer | TextLayer | NoteLayer;
-export type Line = BaseLine;
+/** Layer types enum. */
+export enum LayerType {
+    Rectangle,
+    Ellipse,
+    Path,
+    Text,
+    Note,
+};
 
-// export type ConnectableLayer = RectangleLayer | EllipseLayer | TextLayer | NoteLayer;
+/** Line types enum. */
+export enum LineType {
+    BaseLine,
+    ArrowLine,
+};
+
+/** Basic layer type. */
+export type BasicLayer = {
+    type: LayerType;
+    x: number;
+    y: number;
+    height: number;
+    width: number;
+    fill: Color;
+    value?: string;
+};
+
+/** Basic line type. */
+export type BasicLine = {
+    type: LineType;
+    startLayerId: string;
+    endLayerId?: string;
+    offsetStart: Point;
+    offsetEnd?: Point;
+    fill: Color;
+    value?: string;
+};
+
+/** Layer type alias. */
+export type Layer = BasicLayer;
+/** Line type alias. */
+export type Line = BasicLine;

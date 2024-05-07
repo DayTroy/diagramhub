@@ -1,4 +1,4 @@
-import { Camera, Color, Layer, Point, RectangleLayer, Side, XYWH } from "@/types/canvas";
+import { Camera, Color, Layer, Point, Side, XYWH } from "@/types/canvas";
 import { LiveObject } from "@liveblocks/client";
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
@@ -190,23 +190,23 @@ export function calculateLineOffset(point: Point, layer: Layer): Point {
   switch(side) {
     case Side.Top:
       return {
-        x: layer.width / 2,
+        x: (point.x - layer.x) / layer.width,
         y: 0
       }
     case Side.Bottom:
       return {
-        x: layer.width / 2,
-        y: layer.height
+        x: (point.x - layer.x) / layer.width,
+        y: 1
       }
     case Side.Left:
       return {
         x: 0,
-        y: layer.height / 2
+        y: (point.y - layer.y) / layer.height
       }
     case Side.Right:
       return {
-        x: layer.width,
-        y: layer.height / 2
+        x: 1,
+        y: (point.y - layer.y) / layer.height
       }
   }
 }
