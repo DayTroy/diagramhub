@@ -1,7 +1,7 @@
 import { useSelectionBounds } from "@/hooks/use-selection-bounds";
 import { useSelf, useStorage } from "@/liveblocks.config";
 import { LayerType, Side, XYWH } from "@/types/canvas";
-import { memo } from "react";
+import { memo, useState } from "react";
 
 /**
  * The props type for {@link SelectionBox}
@@ -27,6 +27,11 @@ export const SelectionBox = memo(
         soleLayerId && root.layers.get(soleLayerId)?.type !== LayerType.Path
     );
 
+    const isGatewayType = useStorage(
+      (root) =>
+        soleLayerId && root.layers.get(soleLayerId)?.type === LayerType.EPCGateway
+    );
+
     const bounds = useSelectionBounds();
 
     if (!bounds) {
@@ -38,14 +43,14 @@ export const SelectionBox = memo(
         <rect
           className="fill-transparent stroke-blue-500 stroke-1 pointer-events-none"
           style={{
-            transform: `translate(${bounds.x}px, ${bounds.y}px)`,
+            transform: `translate(${bounds.x}px, ${bounds.y}px) ${isGatewayType ? 'rotate(45deg)' : ''}`,
           }}
           x={0}
           y={0}
-          width={bounds.width}
-          height={bounds.height}
+          width={!isGatewayType ? bounds.width : bounds.width / 2}
+          height={!isGatewayType ? bounds.height : bounds.height / 2}
         />
-        {isShowingHandles && (
+        {(isShowingHandles && !isGatewayType) && (
           <>
             <rect
               className="fill-white stroke-1 stroke-blue-500"

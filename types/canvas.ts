@@ -119,6 +119,7 @@ export type EPCGatewayLayer = {
     width: number;
     fill: Color;
     value?: string;
+    logicalType?: string;
 };
 
 /** Point type. */
