@@ -1,8 +1,13 @@
+"use client"
+
 import { 
+    CalendarCheck,
+    CalendarPlus2,
     Circle, 
+    Diamond, 
     Grab, 
     MousePointer2, 
-    Pencil, 
+    PackageSearch, 
     Redo2, 
     Square, 
     StickyNote, 
@@ -11,6 +16,10 @@ import {
 } from "lucide-react";
 import { ToolButton } from "./tool-button";
 import { CanvasMode, CanvasState, LayerType, GrabSource } from "@/types/canvas";
+import { useParams } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 /**
  * The props type for {@link Toolbar}
@@ -36,6 +45,13 @@ export const Toolbar = ({
     canUndo,
     canRedo
 }: ToolbarProps) => {
+
+    const params = useParams();
+    const data = useQuery(api.board.get, {
+        id: params.boardId as Id<"boards">,
+    });
+    console.log()
+
   return (
     <div className="absolute top-[50%] -translate-y-[50%] left-2 flex flex-col gap-y-4">
         <div className="bg-white rounded-md p-1.5 flex gap-y-1 flex-col items-center shadow-md">
@@ -58,64 +74,111 @@ export const Toolbar = ({
                     canvasState.mode === CanvasMode.Grab
                 }
             />
-            <ToolButton 
-                label="Текст"
-                icon={Type}
-                onClick={() => setCanvasState({
-                    mode: CanvasMode.Inserting,
-                    layerType: LayerType.Text,
-                })}
-                isActive={
-                    canvasState.mode === CanvasMode.Inserting &&
-                    canvasState.layerType === LayerType.Text
-                }
-            />  
-            <ToolButton 
-                label="Записка"
-                icon={StickyNote}
-                onClick={() => setCanvasState({
-                    mode: CanvasMode.Inserting,
-                    layerType: LayerType.Note,
-                })}
-                isActive={
-                    canvasState.mode === CanvasMode.Inserting &&
-                    canvasState.layerType === LayerType.Note
-                }
-            />
-            <ToolButton 
-                label="Прямоугольник"
-                icon={Square}
-                onClick={() => setCanvasState({
-                    mode: CanvasMode.Inserting,
-                    layerType: LayerType.Rectangle,
-                })}
-                isActive={
-                    canvasState.mode === CanvasMode.Inserting &&
-                    canvasState.layerType === LayerType.Rectangle
-                }
-            />
-            <ToolButton 
-                label="Эллипс"
-                icon={Circle}
-                onClick={() => setCanvasState({
-                    mode: CanvasMode.Inserting,
-                    layerType: LayerType.Ellipse,
-                })}
-                isActive={
-                    canvasState.mode === CanvasMode.Inserting &&
-                    canvasState.layerType === LayerType.Ellipse
-                }
-            />
-            {/* <ToolButton 
-                label="Карандаш"
-                icon={Pencil}
-                onClick={() => setCanvasState({
-                    mode: CanvasMode.Pencil
-                })}
-                isActive={
-                    canvasState.mode === CanvasMode.Pencil
-                }
-            /> */}
+            {data?.notation === "default" && (
+                <>
+                    <ToolButton 
+                        label="Текст"
+                        icon={Type}
+                        onClick={() => setCanvasState({
+                            mode: CanvasMode.Inserting,
+                            layerType: LayerType.Text,
+                        })}
+                        isActive={
+                            canvasState.mode === CanvasMode.Inserting &&
+                            canvasState.layerType === LayerType.Text
+                        }
+                    />  
+                    <ToolButton 
+                        label="Записка"
+                        icon={StickyNote}
+                        onClick={() => setCanvasState({
+                            mode: CanvasMode.Inserting,
+                            layerType: LayerType.Note,
+                        })}
+                        isActive={
+                            canvasState.mode === CanvasMode.Inserting &&
+                            canvasState.layerType === LayerType.Note
+                        }
+                    />
+                    <ToolButton 
+                        label="Прямоугольник"
+                        icon={Square}
+                        onClick={() => setCanvasState({
+                            mode: CanvasMode.Inserting,
+                            layerType: LayerType.Rectangle,
+                        })}
+                        isActive={
+                            canvasState.mode === CanvasMode.Inserting &&
+                            canvasState.layerType === LayerType.Rectangle
+                        }
+                    />
+                    <ToolButton 
+                        label="Эллипс"
+                        icon={Circle}
+                        onClick={() => setCanvasState({
+                            mode: CanvasMode.Inserting,
+                            layerType: LayerType.Ellipse,
+                        })}
+                        isActive={
+                            canvasState.mode === CanvasMode.Inserting &&
+                            canvasState.layerType === LayerType.Ellipse
+                        }
+                    />
+                </>
+            )}
+            
+            {data?.notation === "EPC" && (
+                <>
+                    <ToolButton 
+                        label="Событие"
+                        icon={CalendarPlus2}
+                        onClick={() => setCanvasState({
+                            mode: CanvasMode.Inserting,
+                            layerType: LayerType.EPCEvent,
+                        })}
+                        isActive={
+                            canvasState.mode === CanvasMode.Inserting &&
+                            canvasState.layerType === LayerType.EPCEvent
+                        }
+                    />
+                    <ToolButton 
+                        label="Функция"
+                        icon={CalendarCheck}
+                        onClick={() => setCanvasState({
+                            mode: CanvasMode.Inserting,
+                            layerType: LayerType.EPCFunction,
+                        })}
+                        isActive={
+                            canvasState.mode === CanvasMode.Inserting &&
+                            canvasState.layerType === LayerType.EPCFunction
+                        }
+                    />
+                    <ToolButton 
+                        label="Процесс"
+                        icon={PackageSearch}
+                        onClick={() => setCanvasState({
+                            mode: CanvasMode.Inserting,
+                            layerType: LayerType.ProcessInterface,
+                        })}
+                        isActive={
+                            canvasState.mode === CanvasMode.Inserting &&
+                            canvasState.layerType === LayerType.ProcessInterface
+                        }
+                    />
+                    <ToolButton 
+                        label="Шлюз"
+                        icon={Diamond}
+                        onClick={() => setCanvasState({
+                            mode: CanvasMode.Inserting,
+                            layerType: LayerType.EPCGateway,
+                        })}
+                        isActive={
+                            canvasState.mode === CanvasMode.Inserting &&
+                            canvasState.layerType === LayerType.EPCGateway
+                        }
+                    />
+                </>
+            )} 
         </div>
         <div className="bg-white rounded-md p-1.5 flex flex-col items-center shadow-md">
             <ToolButton 

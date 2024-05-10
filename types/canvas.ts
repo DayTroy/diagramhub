@@ -19,6 +19,10 @@ export enum LayerType {
     Path,
     Text,
     Note,
+    EPCEvent,
+    EPCFunction,
+    ProcessInterface,
+    EPCGateway,
 };
 
 /** Rectangle layer type. */
@@ -77,6 +81,46 @@ export type NoteLayer = {
     value?: string;
 };
 
+export type EPCEventLayer = {
+    type: LayerType.EPCEvent;
+    x: number;
+    y: number;
+    height: number;
+    width: number;
+    fill: Color;
+    value?: string;
+};
+
+export type EPCFunctionLayer = {
+    type: LayerType.EPCFunction;
+    x: number;
+    y: number;
+    height: number;
+    width: number;
+    fill: Color;
+    value?: string;
+};
+
+export type ProcessInterfaceLayer = {
+    type: LayerType.ProcessInterface;
+    x: number;
+    y: number;
+    height: number;
+    width: number;
+    fill: Color;
+    value?: string;
+};
+
+export type EPCGatewayLayer = {
+    type: LayerType.EPCGateway;
+    x: number;
+    y: number;
+    height: number;
+    width: number;
+    fill: Color;
+    value?: string;
+};
+
 /** Point type. */
 export type Point = {
     x: number;
@@ -118,7 +162,7 @@ export type CanvasState =
     }
     | {
         mode: CanvasMode.Inserting,
-        layerType: LayerType.Ellipse | LayerType.Rectangle | LayerType.Text | LayerType.Note;
+        layerType: LayerType.Ellipse | LayerType.Rectangle | LayerType.Text | LayerType.Note | LayerType.EPCEvent | LayerType.EPCFunction | LayerType.ProcessInterface | LayerType.EPCGateway;
     }
     | {
         mode: CanvasMode.Resizing,
@@ -152,4 +196,4 @@ export enum GrabSource {
 };
 
 /** Layer type alias. */
-export type Layer = RectangleLayer | EllipseLayer | PathLayer | TextLayer | NoteLayer;
+export type Layer = RectangleLayer | EllipseLayer | PathLayer | TextLayer | NoteLayer | EPCEventLayer | EPCFunctionLayer | ProcessInterfaceLayer | EPCGatewayLayer;

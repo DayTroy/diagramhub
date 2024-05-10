@@ -80,6 +80,14 @@ export const Info = ({
         </Button>
       </Hint>
       <TabSeparator />
+      {data.notation !== "default" && (
+        <>
+          <Hint label="Нотация" side="bottom" sideOffset={10}>
+            <p>{data.notation}</p>
+          </Hint>
+          <TabSeparator />
+        </>
+      )}
       <Actions
         id={data._id}
         title={data.title}
