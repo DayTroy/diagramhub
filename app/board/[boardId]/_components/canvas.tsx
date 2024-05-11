@@ -26,6 +26,7 @@ import { LinePreview } from "./line-preview";
 import { Info } from "./info";
 import { Button } from "@/components/ui/button";
 import { BadgeX } from "lucide-react";
+import { createLineSegments, tipToRestrainedPoint } from "@/lib/line_utils";
 
 const MAX_LAYERS = 100;
 
@@ -455,7 +456,7 @@ export const Canvas = ({
                 return;
             }
 
-            const offset = calculateLineOffset(point, liveLayer);
+            const [offset, side] = calculateLineOffset(point, liveLayer);
 
             const defaultColor =  {
                 r: 0,
@@ -465,32 +466,48 @@ export const Canvas = ({
 
             if (!canvasState.line) {
                 const line = {
-                    type: LineType.BaseLine,
-                    startLayerId: layerId,
-                    offsetStart: offset,
+                    type: LineType.DefaultLine,
+                    start: {
+                        layerId: layerId,
+                        offset: offset,
+                        side: side
+                    },
                     fill: defaultColor
                 }
                 setCanvasState({ mode: CanvasMode.Connecting, line: line })
-            } else if (canvasState.line.startLayerId !== layerId) {
-                canvasState.line.endLayerId = layerId
-                canvasState.line.offsetEnd = offset
+            } else {
+                const startLayer = liveLayers.get(canvasState.line.start.layerId)?.toObject();
+                if (startLayer && canvasState.line.start.layerId !== layerId) {
+                    canvasState.line.end = {
+                        layerId: layerId,
+                        offset: offset,
+                        side: side
+                    }
 
-                const liveLineIds = storage.get("lineIds");
-                const liveLines = storage.get("lines");
+                    canvasState.line.segments = createLineSegments(
+                        tipToRestrainedPoint(canvasState.line.start, startLayer),
+                        tipToRestrainedPoint(canvasState.line.end, liveLayer),
+                        startLayer,
+                        liveLayer
+                    )
 
-                const line = new LiveObject({
-                    ...canvasState.line
-                })
+                    const liveLineIds = storage.get("lineIds");
+                    const liveLines = storage.get("lines");
 
-                const lineId = nanoid();
+                    const line = new LiveObject({
+                        ...canvasState.line
+                    })
 
-                liveLineIds.push(lineId)
-                liveLines.set(lineId, line)
+                    const lineId = nanoid();
 
-                setMyPresence({ selection: [] }, { addToHistory: true })
-                setCanvasState({ mode: CanvasMode.None })
+                    liveLineIds.push(lineId)
+                    liveLines.set(lineId, line)
+
+                    setMyPresence({ selection: [] }, { addToHistory: true })
+                    setCanvasState({ mode: CanvasMode.None })
+                }
             }
-        } else  if(e.button == 0) {
+        } else if(e.button == 0) {
             setCanvasState({ mode: CanvasMode.Translating });
             history.pause();
 

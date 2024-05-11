@@ -3,7 +3,7 @@
 import { useStorage } from "@/liveblocks.config";
 import { memo } from "react";
 import { LineType } from "@/types/canvas";
-import { BaseLineComponent } from "./base-line";
+import { DefaultLineComponent } from "./default-line";
 
 interface LinePreviewProps {
     id: string;
@@ -24,9 +24,9 @@ export const LinePreview = memo(({
     }
 
     switch(line.type) {
-        case LineType.BaseLine:
+        case LineType.DefaultLine:
             return (
-                <BaseLineComponent
+                <DefaultLineComponent
                     id={id}
                     line={line}
                     onPointerDown={onLinePointerDown}

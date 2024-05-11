@@ -184,30 +184,42 @@ export function getLineSide(point: Point, layer: Layer) {
   }
 }
 
-export function calculateLineOffset(point: Point, layer: Layer): Point {
+export function calculateLineOffset(point: Point, layer: Layer): [Point, Side] {
   const side = getLineSide(point, layer);
 
   switch(side) {
     case Side.Top:
-      return {
+      return [{
         x: (point.x - layer.x) / layer.width,
         y: 0
-      }
+      }, side]
     case Side.Bottom:
-      return {
+      return [{
         x: (point.x - layer.x) / layer.width,
         y: 1
-      }
+      }, side]
     case Side.Left:
-      return {
+      return [{
         x: 0,
         y: (point.y - layer.y) / layer.height
-      }
+      }, side]
     case Side.Right:
-      return {
+      return [{
         x: 1,
         y: (point.y - layer.y) / layer.height
-      }
+      }, side]
+  }
+}
+
+/**
+ * Calculates sum of two points.
+ *
+ * @returns (a.x + b.x; a.y + b.y)
+ */
+export function pointsSum(a: Point, b: Point): Point {
+  return {
+    x: a.x + b.x,
+    y: a.y + b.y,
   }
 }
 

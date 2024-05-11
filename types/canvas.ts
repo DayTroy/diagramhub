@@ -18,6 +18,12 @@ export type Point = {
     y: number;
 }
 
+export type RestrainedPoint = {
+    x: number;
+    y: number;
+    possibilities: Side[];
+}
+
 /** Point with width and height type. */
 export type XYWH = {
     x: number;
@@ -33,6 +39,13 @@ export enum Side {
     Left = 4,
     Right = 8
 };
+
+/** Start of end of the line. */
+export type LineTip = {
+    layerId: string;
+    offset: Point;
+    side: Side;
+}
 
 /** Canvas state type. */
 export type CanvasState =
@@ -102,7 +115,7 @@ export enum LayerType {
 
 /** Line types enum. */
 export enum LineType {
-    BaseLine,
+    DefaultLine,
     ArrowLine,
 };
 
@@ -120,10 +133,9 @@ export type BasicLayer = {
 /** Basic line type. */
 export type BasicLine = {
     type: LineType;
-    startLayerId: string;
-    endLayerId?: string;
-    offsetStart: Point;
-    offsetEnd?: Point;
+    start: LineTip;
+    end?: LineTip;
+    segments?: Point[];
     fill: Color;
     value?: string;
 };
