@@ -1,12 +1,12 @@
 import { colorToCss } from "@/lib/utils";
-import { EPCGatewayLayer } from "@/types/canvas";
+import { Layer } from "@/types/canvas";
 
 /**
  * The props type for {@link EPCGateway}
  */
 export interface EPCGatewayProps {
   id: string;
-  layer: EPCGatewayLayer;
+  layer: Layer;
   onPointerDown: (e: React.PointerEvent, id: string) => void;
   selectionColor?: string;
 }

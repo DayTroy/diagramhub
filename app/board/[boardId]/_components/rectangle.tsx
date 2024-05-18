@@ -25,7 +25,7 @@ export const Rectangle = ({
     const { x, y, width, height, fill } = layer;
 
     return (
-        <rect 
+        <rect
             className="drop-shadow-md"
             onPointerDown={(e) => onPointerDown(e, id)}
             style={{

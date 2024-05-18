@@ -46,6 +46,6 @@ export const ZoomBar = ({
  */
 export const ZoomBarSkeleton = () => {
     return (
-        <div className="absolute bottom-2 right-2 h-12 w-[140px] bg-white rounded-md p-1.5 flex gap-x-1 flex-row items-center shadow-md"></div>
+        <div className="absolute bottom-2 left-2 h-12 w-[140px] bg-white rounded-md p-1.5 flex gap-x-1 flex-row items-center shadow-md"></div>
     )
 }

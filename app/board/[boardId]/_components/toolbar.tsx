@@ -1,18 +1,18 @@
 "use client"
 
-import { 
+import {
     CalendarCheck,
     CalendarPlus2,
-    Circle, 
-    Diamond, 
-    Grab, 
-    MousePointer2, 
-    PackageSearch, 
-    Redo2, 
-    Spline, 
-    Square, 
-    StickyNote, 
-    Type, 
+    Circle,
+    Diamond,
+    Grab,
+    MousePointer2,
+    PackageSearch,
+    Redo2,
+    Spline,
+    Square,
+    StickyNote,
+    Type,
     Undo2
 } from "lucide-react";
 import { ToolButton } from "./tool-button";
@@ -56,18 +56,18 @@ export const Toolbar = ({
   return (
     <div className="absolute top-[50%] -translate-y-[50%] left-2 flex flex-col gap-y-4">
         <div className="bg-white rounded-md p-1.5 flex gap-y-1 flex-col items-center shadow-md">
-            <ToolButton 
+            <ToolButton
                 label="Выбрать"
                 icon={MousePointer2}
                 onClick={() => setCanvasState({mode: CanvasMode.None})}
                 isActive={
-                    canvasState.mode === CanvasMode.None || 
+                    canvasState.mode === CanvasMode.None ||
                     canvasState.mode === CanvasMode.Translating ||
-                    canvasState.mode === CanvasMode.Pressing || 
+                    canvasState.mode === CanvasMode.Pressing ||
                     canvasState.mode === CanvasMode.Resizing
                 }
             />
-            <ToolButton 
+            <ToolButton
                 label="Сдвинуть"
                 icon={Grab}
                 onClick={() => setCanvasState({mode: CanvasMode.Grab, source: GrabSource.Toolbar})}
@@ -77,7 +77,7 @@ export const Toolbar = ({
             />
             {data?.notation === "default" && (
                 <>
-                    <ToolButton 
+                    <ToolButton
                         label="Текст"
                         icon={Type}
                         onClick={() => setCanvasState({
@@ -88,8 +88,8 @@ export const Toolbar = ({
                             canvasState.mode === CanvasMode.Inserting &&
                             canvasState.layerType === LayerType.Text
                         }
-                    />  
-                    <ToolButton 
+                    />
+                    <ToolButton
                         label="Записка"
                         icon={StickyNote}
                         onClick={() => setCanvasState({
@@ -101,7 +101,7 @@ export const Toolbar = ({
                             canvasState.layerType === LayerType.Note
                         }
                     />
-                    <ToolButton 
+                    <ToolButton
                         label="Прямоугольник"
                         icon={Square}
                         onClick={() => setCanvasState({
@@ -113,7 +113,7 @@ export const Toolbar = ({
                             canvasState.layerType === LayerType.Rectangle
                         }
                     />
-                    <ToolButton 
+                    <ToolButton
                         label="Эллипс"
                         icon={Circle}
                         onClick={() => setCanvasState({
@@ -125,12 +125,17 @@ export const Toolbar = ({
                             canvasState.layerType === LayerType.Ellipse
                         }
                     />
+                    <ToolButton
+                        label="Соединить"
+                        icon={Spline}
+                        onClick={() => setCanvasState({ mode: CanvasMode.Connecting, type: LineType.DefaultLine })}
+                        isActive={ canvasState.mode === CanvasMode.Connecting  }
+                    />
                 </>
             )}
-            
             {data?.notation === "EPC" && (
                 <>
-                    <ToolButton 
+                    <ToolButton
                         label="Событие"
                         icon={CalendarPlus2}
                         onClick={() => setCanvasState({
@@ -142,7 +147,7 @@ export const Toolbar = ({
                             canvasState.layerType === LayerType.EPCEvent
                         }
                     />
-                    <ToolButton 
+                    <ToolButton
                         label="Функция"
                         icon={CalendarCheck}
                         onClick={() => setCanvasState({
@@ -154,7 +159,7 @@ export const Toolbar = ({
                             canvasState.layerType === LayerType.EPCFunction
                         }
                     />
-                    <ToolButton 
+                    <ToolButton
                         label="Процесс"
                         icon={PackageSearch}
                         onClick={() => setCanvasState({
@@ -166,7 +171,7 @@ export const Toolbar = ({
                             canvasState.layerType === LayerType.ProcessInterface
                         }
                     />
-                    <ToolButton 
+                    <ToolButton
                         label="Шлюз"
                         icon={Diamond}
                         onClick={() => setCanvasState({
@@ -178,17 +183,23 @@ export const Toolbar = ({
                             canvasState.layerType === LayerType.EPCGateway
                         }
                     />
+                    <ToolButton
+                        label="Соединить"
+                        icon={Spline}
+                        onClick={() => setCanvasState({ mode: CanvasMode.Connecting, type: LineType.DefaultLine })}
+                        isActive={ canvasState.mode === CanvasMode.Connecting  }
+                    />
                 </>
-            )} 
+            )}
         </div>
         <div className="bg-white rounded-md p-1.5 flex flex-col items-center shadow-md">
-            <ToolButton 
+            <ToolButton
                 label="Отменить"
                 icon={Undo2}
                 onClick={undo}
                 isDisabled={!canUndo}
             />
-            <ToolButton 
+            <ToolButton
                 label="Повторить"
                 icon={Redo2}
                 onClick={redo}

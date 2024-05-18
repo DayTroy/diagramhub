@@ -2,7 +2,7 @@ import { Raleway } from 'next/font/google';
 import ContentEditable, {ContentEditableEvent} from 'react-contenteditable';
 
 import { cn, colorToCss, getContrastingTextColor } from '@/lib/utils';
-import { EPCEventLayer, EPCFunctionLayer } from '@/types/canvas';
+import { Layer } from '@/types/canvas';
 import { useMutation } from '@/liveblocks.config';
 
 const font = Raleway({
@@ -24,7 +24,7 @@ const calculateFontSize = (width: number, height: number) => {
  */
 export interface EPCEventProps {
     id: string;
-    layer: EPCFunctionLayer;
+    layer: Layer;
     onPointerDown: (e:React.PointerEvent, id: string) => void;
     selectionColor?: string;
 }
