@@ -82,6 +82,7 @@ export type CanvasState =
     }
     | {
         mode: CanvasMode.Connecting,
+        type: LineType,
         line?: Line
     }
 
@@ -116,6 +117,7 @@ export enum LayerType {
 /** Line types enum. */
 export enum LineType {
     DefaultLine,
+    CurvedLine,
     ArrowLine,
 };
 

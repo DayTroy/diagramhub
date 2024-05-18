@@ -466,7 +466,7 @@ export const Canvas = ({
 
             if (!canvasState.line) {
                 const line = {
-                    type: LineType.DefaultLine,
+                    type: canvasState.type,
                     start: {
                         layerId: layerId,
                         offset: offset,
@@ -474,7 +474,7 @@ export const Canvas = ({
                     },
                     fill: defaultColor
                 }
-                setCanvasState({ mode: CanvasMode.Connecting, line: line })
+                setCanvasState({ mode: CanvasMode.Connecting, type: canvasState.type, line: line })
             } else {
                 const startLayer = liveLayers.get(canvasState.line.start.layerId)?.toObject();
                 if (startLayer && canvasState.line.start.layerId !== layerId) {
@@ -487,6 +487,7 @@ export const Canvas = ({
                     canvasState.line.segments = createLineSegments(
                         tipToRestrainedPoint(canvasState.line.start, startLayer),
                         tipToRestrainedPoint(canvasState.line.end, liveLayer),
+                        canvasState.line.type,
                         startLayer,
                         liveLayer
                     )

@@ -4,6 +4,7 @@ import { useStorage } from "@/liveblocks.config";
 import { memo } from "react";
 import { LineType } from "@/types/canvas";
 import { DefaultLineComponent } from "./default-line";
+import { CurvedLine } from "./curved-line";
 
 interface LinePreviewProps {
     id: string;
@@ -27,6 +28,15 @@ export const LinePreview = memo(({
         case LineType.DefaultLine:
             return (
                 <DefaultLineComponent
+                    id={id}
+                    line={line}
+                    onPointerDown={onLinePointerDown}
+                    selectionColor={selectionColor}
+                />
+            );
+        case LineType.CurvedLine:
+            return (
+                <CurvedLine
                     id={id}
                     line={line}
                     onPointerDown={onLinePointerDown}

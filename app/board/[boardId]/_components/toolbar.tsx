@@ -11,7 +11,7 @@ import {
     Undo2
 } from "lucide-react";
 import { ToolButton } from "./tool-button";
-import { CanvasMode, CanvasState, LayerType, GrabSource } from "@/types/canvas";
+import { CanvasMode, CanvasState, LayerType, GrabSource, LineType } from "@/types/canvas";
 
 /**
  * The props type for {@link Toolbar}
@@ -110,7 +110,7 @@ export const Toolbar = ({
             <ToolButton 
                 label="Соединить"
                 icon={Spline}
-                onClick={() => setCanvasState({ mode: CanvasMode.Connecting })}
+                onClick={() => setCanvasState({ mode: CanvasMode.Connecting, type: LineType.DefaultLine })}
                 isActive={ canvasState.mode === CanvasMode.Connecting  }
             />
             {/* <ToolButton 

@@ -1,8 +1,16 @@
-import { LineTip, Point, RestrainedPoint, Side, XYWH } from "@/types/canvas";
+import { LineTip, LineType, Point, RestrainedPoint, Side, XYWH } from "@/types/canvas";
 
 const MIN_MOVE = 20;
 
-export function createLineSegments(start: RestrainedPoint, end: RestrainedPoint, startBlocker?: XYWH, endBlocker?: XYWH): Point[] {
+export function createLineSegments(start: RestrainedPoint, end: RestrainedPoint, lineType: LineType, startBlocker?: XYWH, endBlocker?: XYWH): Point[] {
+    if (lineType === LineType.DefaultLine || lineType === LineType.ArrowLine)
+            return createDefaultLineSegments(start, end, startBlocker, endBlocker);
+    if (lineType === LineType.CurvedLine)
+            return [];
+    return [];
+}
+
+function createDefaultLineSegments(start: RestrainedPoint, end: RestrainedPoint, startBlocker?: XYWH, endBlocker?: XYWH): Point[] {
     if (start.possibilities.length == 0 || end.possibilities.length == 0)
         return [];
 
