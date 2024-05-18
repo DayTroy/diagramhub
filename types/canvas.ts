@@ -112,6 +112,10 @@ export enum LayerType {
     Path,
     Text,
     Note,
+    EPCEvent,
+    EPCFunction,
+    ProcessInterface,
+    EPCGateway
 };
 
 /** Line types enum. */
