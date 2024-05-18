@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useEffect } from "react";
-import { Camera, CanvasMode, CanvasState, Color, GrabSource, LayerType, Point, Side, XYWH } from "@/types/canvas";
-import { Info } from "./info";
+import { Camera, CanvasMode, CanvasState, Color, GrabSource, LayerType, LineType, Point, Side, XYWH } from "@/types/canvas";
 import { Participants } from "./participants";
 import { Toolbar } from "./toolbar";
 import { nanoid } from "nanoid"
@@ -16,13 +15,18 @@ import {
     useOthersMapped
 } from "@/liveblocks.config";
 import { CursorsPresence } from "./cursors-presence";
-import { clamp, connectionIdToColor, findIntersectingLayersWithRectangle, mouseEventToCanvasPoint, resizeBounds, screenPointToCanvasPoint } from "@/lib/utils";
+import { calculateLineOffset, clamp, connectionIdToColor, findIntersectingLayersWithRectangle, getMousePosition, mouseEventToCanvasPoint, pointsDifference, resizeBounds, screenPointToCanvasPoint } from "@/lib/utils";
 import { LiveObject } from "@liveblocks/client";
 import { LayerPreview } from "./layer-preview";
 import { SelectionBox } from "./selection-box";
 import { SelectionTools } from "./selection-tools";
 import { ZoomBar } from "./zoom-bar";
 import usePreventZoom from "@/lib/prevent_zoom";
+import { LinePreview } from "./line-preview";
+import { Info } from "./info";
+import { Button } from "@/components/ui/button";
+import { BadgeX } from "lucide-react";
+import { createLineSegments, tipToRestrainedPoint } from "@/lib/line_utils";
 
 const MAX_LAYERS = 100;
 
@@ -42,6 +46,7 @@ export const Canvas = ({
     boardId,
 }: CanvasProps) => {
     const layerIds = useStorage((root) => root.layerIds);
+    const lineIds = useStorage((root) => root.lineIds);
 
     const [canvasState, setCanvasState] = useState<CanvasState>({
         mode: CanvasMode.None
@@ -50,6 +55,8 @@ export const Canvas = ({
     const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, scale: 1 });
     const MAX_CAM_SCALE = 2;
     const MIN_CAM_SCALE = 0.2;
+
+    const [mouseScreenPosition, setMouseScreenPosition] = useState<Point>({ x: 0, y: 0});
 
     const [lastUsedColor, setLastUsedColor] = useState<Color>({
         r: 0,
@@ -64,12 +71,15 @@ export const Canvas = ({
     usePreventZoom();
     useEffect(() => {
         document.body.style.overflow = "hidden";
+        document.body.style.overscrollBehaviorX = "none"
     });
 
-    /** insert a new layer at given position */
+    /**
+     * Insert a new layer at given position.
+    */
     const insertLayer = useMutation((
         { storage, setMyPresence },
-        layerType: LayerType.Ellipse | LayerType.Rectangle | LayerType.Text | LayerType.Note,
+        layerType: LayerType,
         positionCC: Point
     ) => {
         const liveLayers = storage.get("layers");
@@ -79,7 +89,6 @@ export const Canvas = ({
         }
 
         const liveLayersIds = storage.get("layerIds");
-
         const layerId = nanoid();
 
         const layer = new LiveObject({
@@ -101,15 +110,10 @@ export const Canvas = ({
 
     const translateSelectedLayers = useMutation((
         { storage, self },
-        pointerDeltaSC: Point
+        pointerDeltaCC: Point
     ) => {
         if( canvasState.mode !== CanvasMode.Translating) {
             return;
-        }
-
-        const offset = {
-            x: pointerDeltaSC.x / camera.scale,
-            y: pointerDeltaSC.y / camera.scale,
         }
 
         const liveLayers = storage.get("layers");
@@ -119,13 +123,11 @@ export const Canvas = ({
 
             if (layer) {
                 layer.update({
-                    x: layer.get("x") + offset.x,
-                    y: layer.get("y") + offset.y,
+                    x: layer.get("x") + pointerDeltaCC.x,
+                    y: layer.get("y") + pointerDeltaCC.y,
                 })
             }
         }
-        setCanvasState({ mode: CanvasMode.Translating });
-
     }, [
         canvasState,
     ]);
@@ -206,27 +208,41 @@ export const Canvas = ({
         }))
     }, []);
 
-    const handlePointerPositionChange = useMutation((
+    /**
+     * Handles mouse position change.
+     * Should be called after the camera zooms or when the user moves the mouse.
+     *
+     * @param newMouseScreenPos new mouse position in screen coordinates
+     * @param newCamData new camera parameters
+     * @param buttons Pressed mouse btns (same as MouseEvent.buttons)
+     */
+    const handleMousePositionChange = useMutation((
         { setMyPresence },
-        newPointerPositionCC: Point,
-        e: React.MouseEvent,
+        newMouseScreenPos: Point,
+        newCamData: Camera,
+        buttons: number,
     ) => {
+        const newMouseCanvasPos = screenPointToCanvasPoint(newMouseScreenPos, newCamData);
 
         if (canvasState.mode === CanvasMode.Pressing) {
-            startMultiSelection(newPointerPositionCC, canvasState.origin);
+            startMultiSelection(newMouseCanvasPos, canvasState.origin);
         } else if (canvasState.mode === CanvasMode.SelectionNet) {
-            updateSelectionNet(newPointerPositionCC, canvasState.origin)
+            updateSelectionNet(newMouseCanvasPos, canvasState.origin)
         } else if (canvasState.mode === CanvasMode.Translating) {
-            translateSelectedLayers({x: e.movementX, y: e.movementY});
+            const prevMouseCanvasPos = screenPointToCanvasPoint(mouseScreenPosition, camera)
+            translateSelectedLayers(pointsDifference(newMouseCanvasPos, prevMouseCanvasPos));
         } else if (canvasState.mode === CanvasMode.Resizing) {
-            resizeSelectedLayer(newPointerPositionCC)
-        } else if (canvasState.mode === CanvasMode.Grab && e.buttons !== 0) {
-            grabUpdateCameraPosition({x: e.movementX, y: e.movementY})
+            resizeSelectedLayer(newMouseCanvasPos)
+        } else if (canvasState.mode === CanvasMode.Grab && buttons !== 0) {
+            grabUpdateCameraPosition(pointsDifference(newMouseScreenPos, mouseScreenPosition))
         }
 
-        setMyPresence({ cursor:newPointerPositionCC });
+        setMyPresence({ cursor:newMouseCanvasPos });
+        setMouseScreenPosition(newMouseScreenPos)
     }, [
         canvasState,
+        mouseScreenPosition,
+        camera,
         resizeSelectedLayer,
         translateSelectedLayers
     ])
@@ -246,7 +262,7 @@ export const Canvas = ({
     const zoomCamera = useCallback((
         amount: number,
         zoomCenterSC: Point
-    ) => {
+    ): Camera => {
         const newCamData = {
             x: camera.x,
             y: camera.y,
@@ -267,11 +283,11 @@ export const Canvas = ({
 
     const zoomToCenter = useCallback((
         zoomIn: Boolean
-    ) => {
+    ): Camera => {
         const screenCenter = {x: window.innerWidth/2, y: window.innerHeight/2};
         const amount = zoomIn ? 0.1 : -0.1;
 
-        zoomCamera(amount, screenCenter);
+        return zoomCamera(amount, screenCenter);
     }, [zoomCamera])
 
     const moveCamera = useCallback((
@@ -308,26 +324,40 @@ export const Canvas = ({
             }
         }
 
-        const pointerCanvasPos = mouseEventToCanvasPoint(e, newCamData)
-        handlePointerPositionChange(pointerCanvasPos, e)
+        handleMousePositionChange(getMousePosition(e), newCamData, e.buttons)
     }, [
         canvasState,
-        handlePointerPositionChange,
+        handleMousePositionChange,
         moveCamera,
         zoomCamera
     ])
+
+    const onKeyDown = useCallback((
+        e: React.KeyboardEvent
+    ) => {
+        if (e.ctrlKey) {
+            let camData = undefined;
+            if (e.code == "Equal" || e.code == "NumpadAdd") {
+                camData = zoomCamera(0.1, mouseScreenPosition);
+            } else if (e.code == "Minus" || e.code == "NumpadSubtract") {
+                camData = zoomCamera(-0.1, mouseScreenPosition);
+            }
+
+            if (camData) {
+                handleMousePositionChange(mouseScreenPosition, camData, 0)
+            }
+        }
+    }, [handleMousePositionChange, zoomCamera, mouseScreenPosition])
 
     const onPointerMove = useCallback((
         e: React.PointerEvent
     ) => {
         e.preventDefault();
 
-        const pointerCanvasPos = mouseEventToCanvasPoint(e, camera);
-
-        handlePointerPositionChange(pointerCanvasPos, e)
+        handleMousePositionChange(getMousePosition(e), camera, e.buttons)
     }, [
         camera,
-        handlePointerPositionChange
+        handleMousePositionChange
     ])
 
     const onPointerLeaveWindow = useCallback(() => {
@@ -352,6 +382,7 @@ export const Canvas = ({
         { setMyPresence },
         e: React.PointerEvent,
     ) => {
+        setMouseScreenPosition({x: e.clientX, y: e.clientY});
         const pointerCanvasPos = mouseEventToCanvasPoint(e, camera);
 
         if (canvasState.mode === CanvasMode.Inserting) {
@@ -362,7 +393,7 @@ export const Canvas = ({
 
         if (e.button === 1) {
             setCanvasState({mode: CanvasMode.Grab, source: GrabSource.ScrollWheelPress})
-        } else if (canvasState.mode !== CanvasMode.Grab) {
+        } else if (canvasState.mode !== CanvasMode.Grab && canvasState.mode !== CanvasMode.Connecting) {
             setCanvasState({ origin: pointerCanvasPos, mode: CanvasMode.Pressing });
         }
     }, [camera, canvasState, setCanvasState])
@@ -374,7 +405,7 @@ export const Canvas = ({
         const point = mouseEventToCanvasPoint(e, camera);
 
         if (
-            canvasState.mode === CanvasMode.None ||
+            // canvasState.mode === CanvasMode.None ||
             canvasState.mode === CanvasMode.Pressing
         ) {
             unselectLayers();
@@ -388,7 +419,7 @@ export const Canvas = ({
             {
                 setCanvasState({mode: CanvasMode.None});
             }
-        } else {
+        } else if (canvasState.mode !== CanvasMode.Connecting) {
             setCanvasState({
                 mode: CanvasMode.None
             });
@@ -406,30 +437,94 @@ export const Canvas = ({
     const selections = useOthersMapped((other) => other.presence.selection);
 
     const onLayerPointerDown = useMutation((
-        { self, setMyPresence },
+        { self, setMyPresence, storage },
         e: React.PointerEvent,
         layerId: string,
     ) => {
+
         if (
             canvasState.mode === CanvasMode.Pencil ||
             canvasState.mode === CanvasMode.Inserting
         ) {
             return;
+        } else if (canvasState.mode === CanvasMode.Connecting) {
+            const point = mouseEventToCanvasPoint(e, camera);
+            const liveLayers = storage.get("layers");
+            const liveLayer = liveLayers.get(layerId)?.toObject();
+
+            if (!liveLayer) {
+                return;
+            }
+
+            const [offset, side] = calculateLineOffset(point, liveLayer);
+
+            const defaultColor =  {
+                r: 0,
+                g: 0,
+                b: 0
+            }
+
+            if (!canvasState.line) {
+                const line = {
+                    type: canvasState.type,
+                    start: {
+                        layerId: layerId,
+                        offset: offset,
+                        side: side
+                    },
+                    fill: defaultColor
+                }
+                setCanvasState({ mode: CanvasMode.Connecting, type: canvasState.type, line: line })
+            } else {
+                const startLayer = liveLayers.get(canvasState.line.start.layerId)?.toObject();
+                if (startLayer && canvasState.line.start.layerId !== layerId) {
+                    canvasState.line.end = {
+                        layerId: layerId,
+                        offset: offset,
+                        side: side
+                    }
+
+                    canvasState.line.segments = createLineSegments(
+                        tipToRestrainedPoint(canvasState.line.start, startLayer),
+                        tipToRestrainedPoint(canvasState.line.end, liveLayer),
+                        canvasState.line.type,
+                        startLayer,
+                        liveLayer
+                    )
+
+                    const liveLineIds = storage.get("lineIds");
+                    const liveLines = storage.get("lines");
+
+                    const line = new LiveObject({
+                        ...canvasState.line
+                    })
+
+                    const lineId = nanoid();
+
+                    liveLineIds.push(lineId)
+                    liveLines.set(lineId, line)
+
+                    setMyPresence({ selection: [] }, { addToHistory: true })
+                    setCanvasState({ mode: CanvasMode.None })
+                }
+            }
+        } else if(e.button == 0) {
+            setCanvasState({ mode: CanvasMode.Translating });
+            history.pause();
+
+            if (!self.presence.selection.includes(layerId)) {
+                setMyPresence({ selection: [layerId ]}, { addToHistory: true });
+            }
+        } else if (e.button == 1) {
+            setCanvasState({mode: CanvasMode.Grab, source: GrabSource.ScrollWheelPress})
         }
 
-        history.pause();
         e.stopPropagation();
-
-        if (!self.presence.selection.includes(layerId)) {
-            setMyPresence({ selection: [layerId ]}, { addToHistory: true });
-        }
-
-        setCanvasState({ mode: CanvasMode.Translating });
     }, [
         setCanvasState,
         camera,
         history,
-        canvasState.mode
+        canvasState
     ])
 
     const layerIdsToColorSelection = useMemo(() => {
@@ -446,13 +541,41 @@ export const Canvas = ({
          return layerIdsToColorSelection;
     }, [selections]);
 
+    const onLinePointerDown = useMutation((
+        { },
+        e: React.PointerEvent,
+        lineId: string,
+    ) => {
+        console.log("Line pointer down (%s)", lineId)
+    }, [])
+
+    const removeAllLines = useMutation((
+        { storage }
+    ) => {
+        const liveLines = storage.get("lines");
+        const liveLineIds = storage.get("lineIds");
+
+        for (const id of lineIds) {
+            liveLines.delete(id);
+
+            const index = liveLineIds.indexOf(id);
+
+            if (index !== -1) {
+                liveLineIds.delete(index);
+            }
+        }
+    }, [lineIds])
+
     return (
         <main
             className="h-full w-full relative bg-neutral-100 touch-none"
-            onPointerLeave={onPointerLeaveWindow}
             onPointerUp={onPointerUp}
+            onPointerMove={onPointerMove}
+            onPointerLeave={onPointerLeaveWindow}
+            onKeyDown={onKeyDown}
+            tabIndex={-1}
         >
-            <Info boardId={boardId} />
+            {/* <Info boardId={boardId} /> */}
             <Participants />
             <Toolbar
                 canvasState={canvasState}
@@ -471,10 +594,19 @@ export const Canvas = ({
                 zoomIn={() => zoomToCenter(true)}
                 zoomOut={() => zoomToCenter(false)}
             />
+            {/* Debug lines remove button (delete it and removeAllLines function later) */}
+            <Button
+                className= "absolute bottom-2 right-2 bg-white rounded-md h-12 w-12"
+                onClick={removeAllLines}
+                size="icon"
+                variant="board"
+            >
+                <BadgeX />
+            </Button>
             <svg
-                className="h-[100vh] w-[100vw]"
+                id="canvas"
+                className="h-[100vh] w-[100vw] select-none"
                 onWheel={onWheel}
-                onPointerMove={onPointerMove}
                 onPointerLeave={onPointerLeaveCanvas}
                 onPointerDown={onPointerDown}
             >
@@ -490,6 +622,14 @@ export const Canvas = ({
                             id={layerId}
                             onLayerPointerDown={onLayerPointerDown}
                             selectionColor={layerIdsToColorSelection[layerId]}
+                        />
+                    ))}
+                    {lineIds?.map((lineId) => (
+                        <LinePreview
+                            key={lineId}
+                            id={lineId}
+                            onLinePointerDown={onLinePointerDown}
+                            selectionColor={""}
                         />
                     ))}
                     <SelectionBox

@@ -20,21 +20,21 @@ export const ZoomBar = ({
     zoomOut,
 }: ZoomBarProps) => {
     return (
-        <div className="absolute bottom-2 right-2 h-12 bg-white rounded-md p-1.5 flex gap-x-1 flex-row items-center shadow-md">
-        <Button
-                onClick={zoomIn}
-                size="icon"
-                variant="board"
-            >
-                <Plus />
-            </Button>
-            <p className="font-normal text-base h-10 w-10 items-center justify-center inline-flex select-none">{Math.round(cameraScale * 100)}%</p>
+        <div className="absolute bottom-2 left-2 h-12 bg-white rounded-md p-1.5 flex gap-x-1 flex-row items-center shadow-md">
             <Button
                 onClick={zoomOut}
                 size="icon"
                 variant="board"
             >
                 <Minus />
+            </Button>
+            <p className="font-normal text-base h-10 w-10 items-center justify-center inline-flex select-none">{Math.round(cameraScale * 100)}%</p>
+            <Button
+                onClick={zoomIn}
+                size="icon"
+                variant="board"
+            >
+                <Plus />
             </Button>
         </div>
     )
@@ -46,6 +46,6 @@ export const ZoomBar = ({
  */
 export const ZoomBarSkeleton = () => {
     return (
-        <div className="absolute bottom-2 right-2 h-12 w-[140px] bg-white rounded-md p-1.5 flex gap-x-1 flex-row items-center shadow-md"></div>
+        <div className="absolute bottom-2 left-2 h-12 w-[140px] bg-white rounded-md p-1.5 flex gap-x-1 flex-row items-center shadow-md"></div>
     )
 }

@@ -1,12 +1,12 @@
 import { colorToCss } from "@/lib/utils"
-import { EllipseLayer } from "@/types/canvas"
+import { Layer } from "@/types/canvas"
 
 /**
  * The props type for {@link Ellipse}
  */
 export interface EllipseProps {
     id: string;
-    layer: EllipseLayer;
+    layer: Layer;
     onPointerDown: (e: React.PointerEvent, id: string) => void;
     selectionColor?: string;
 }

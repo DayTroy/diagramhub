@@ -1,13 +1,13 @@
-import { Kalam } from 'next/font/google';
+import { Raleway } from 'next/font/google';
 import ContentEditable, {ContentEditableEvent} from 'react-contenteditable';
 
 import { cn, colorToCss, getContrastingTextColor } from '@/lib/utils';
 import { Layer } from '@/types/canvas';
 import { useMutation } from '@/liveblocks.config';
 
-const font = Kalam({
-    subsets: ["latin"],
-    weight: ["400"],
+const font = Raleway({
+    subsets: ["cyrillic"],
+    weight: ["500"],
 });
 
 const calculateFontSize = (width: number, height: number) => {
@@ -22,7 +22,7 @@ const calculateFontSize = (width: number, height: number) => {
 /**
  * The props type for {@link Note}
  */
-export interface NoteProps {
+export interface EPCEventProps {
     id: string;
     layer: Layer;
     onPointerDown: (e:React.PointerEvent, id: string) => void;
@@ -30,15 +30,15 @@ export interface NoteProps {
 }
 
 /**
- *  Component representing note canvas object
+ *  Component representing EPCFunction canvas object
  *  @category Component
  */
-export const Note = ({
+export const EPCFunction = ({
     layer,
     onPointerDown,
     id,
     selectionColor
-}: NoteProps) => {
+}: EPCEventProps) => {
     const { x, y, width, height, fill, value } = layer;
 
     const updateValue = useMutation((
@@ -62,12 +62,12 @@ export const Note = ({
             onPointerDown={(e) => onPointerDown(e, id)}
             style={{
                 outline: selectionColor ? `1px solid ${selectionColor}` : 'none',
-                backgroundColor: fill ? colorToCss(fill) : "#000",
+                backgroundColor: "#92ff20",
             }}
-            className='shadow-md drop-shadow-xl'
+            className='shadow-md drop-shadow-xl rounded-xl'
         >
             <ContentEditable
-                html={value || "Text"}
+                html={value || "Что сделал?"}
                 onChange={handleContentChange}
                 className={cn(
                     "h-full w-full flex items-center justify-center text-center outline-none",
@@ -75,7 +75,7 @@ export const Note = ({
                 )}
                 style={{
                     fontSize: calculateFontSize(width, height),
-                    color: fill ? getContrastingTextColor(fill) : "#000",
+                    color: "#000",
                 }}
             />
         </foreignObject>

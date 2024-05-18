@@ -11,12 +11,12 @@ export function usePreventZoom(scrollCheck = true, keyboardCheck = true) {
         if (
           keyboardCheck &&
           e.ctrlKey &&
-          (e.code == "61" ||
-            e.code == "107" ||
-            e.code == "173" ||
-            e.code == "109" ||
-            e.code == "187" ||
-            e.code == "189")
+          (
+            e.code == "Equal" ||
+            e.code == "Minus" ||
+            e.code == "NumpadSubtract" ||
+            e.code == "NumpadAdd"
+          )
         ) {
           e.preventDefault();
         }

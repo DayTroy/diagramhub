@@ -1,12 +1,12 @@
 import { colorToCss } from "@/lib/utils";
-import { RectangleLayer } from "@/types/canvas";
+import { Layer } from "@/types/canvas";
 
 /**
  * The props type for {@link Rectangle}
  */
 export interface RectangleProps {
     id: string;
-    layer: RectangleLayer;
+    layer: Layer;
     onPointerDown: (e: React.PointerEvent, id: string) => void;
     selectionColor?: string;
 }
@@ -25,7 +25,7 @@ export const Rectangle = ({
     const { x, y, width, height, fill } = layer;
 
     return (
-        <rect 
+        <rect
             className="drop-shadow-md"
             onPointerDown={(e) => onPointerDown(e, id)}
             style={{

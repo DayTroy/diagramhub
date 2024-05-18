@@ -1,4 +1,5 @@
 import { Camera, Color, Layer, Point, Side, XYWH } from "@/types/canvas";
+import { LiveObject } from "@liveblocks/client";
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -151,3 +152,98 @@ export function getContrastingTextColor(color: Color) {
 export function clamp(val: number, min: number, max: number) {
   return Math.min(Math.max(val, min), max)
 }
+
+export function getLayerCenter(layer: Layer): Point {
+  return {
+    x: layer.x + layer.width / 2,
+    y: layer.y + layer.height / 2
+  }
+}
+
+function luRdDiagonal(point: Point, layer: Layer) {
+  return (layer.height/layer.width) * (point.x - layer.x) + layer.y;
+}
+
+function ldRuDiagonal(point: Point, layer: Layer) {
+  return (layer.height/layer.width) * (layer.x- point.x) + layer.y +layer.height;
+}
+
+export function getLineSide(point: Point, layer: Layer) {
+  if (point.y > luRdDiagonal(point, layer)) {
+    if (point.y > ldRuDiagonal(point, layer)) {
+      return Side.Bottom;
+    } else {
+      return Side.Left;
+    }
+  } else {
+    if (point.y < ldRuDiagonal(point, layer)) {
+      return Side.Top;
+    } else {
+      return Side.Right;
+    }
+  }
+}
+
+export function calculateLineOffset(point: Point, layer: Layer): [Point, Side] {
+  const side = getLineSide(point, layer);
+
+  switch(side) {
+    case Side.Top:
+      return [{
+        x: (point.x - layer.x) / layer.width,
+        y: 0
+      }, side]
+    case Side.Bottom:
+      return [{
+        x: (point.x - layer.x) / layer.width,
+        y: 1
+      }, side]
+    case Side.Left:
+      return [{
+        x: 0,
+        y: (point.y - layer.y) / layer.height
+      }, side]
+    case Side.Right:
+      return [{
+        x: 1,
+        y: (point.y - layer.y) / layer.height
+      }, side]
+  }
+}
+
+/**
+ * Calculates sum of two points.
+ *
+ * @returns (a.x + b.x; a.y + b.y)
+ */
+export function pointsSum(a: Point, b: Point): Point {
+  return {
+    x: a.x + b.x,
+    y: a.y + b.y,
+  }
+}
+
+/**
+ * Calculates difference between points (a - b).
+ *
+ * @returns (a.x - b.x; a.y - b.y)
+ */
+export function pointsDifference(a: Point, b: Point): Point {
+  return {
+    x: a.x - b.x,
+    y: a.y - b.y,
+  }
+}
+
+/**
+ * Returns mouse position as {@link Point} from React.MouseEvent.
+ *
+ * @returns (e.clientX; e.clienY)
+ */
+export function getMousePosition(e: React.MouseEvent): Point {
+  return {
+    x: e.clientX,
+    y: e.clientY,
+  }
+}
+

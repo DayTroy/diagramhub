@@ -12,75 +12,16 @@ export type Camera = {
     scale: number;
 }
 
-/** Layer type. */
-export enum LayerType {
-    Rectangle,
-    Ellipse,
-    Path,
-    Text,
-    Note,
-};
-
-/** Rectangle layer type. */
-export type RectangleLayer = {
-    type: LayerType.Rectangle;
-    x: number;
-    y: number;
-    height: number;
-    width: number;
-    fill: Color;
-    value?: string;
-};
-
-/** Ellipse layer type. */
-export type EllipseLayer = {
-    type: LayerType.Ellipse;
-    x: number;
-    y: number;
-    height: number;
-    width: number;
-    fill: Color;
-    value?: string;
-};
-
-/** Path layer type. */
-export type PathLayer = {
-    type: LayerType.Path;
-    x: number;
-    y: number;
-    height: number;
-    width: number;
-    fill: Color;
-    points: number[][];
-    value?: string;
-};
-
-/** Text layer type. */
-export type TextLayer = {
-    type: LayerType.Text;
-    x: number;
-    y: number;
-    height: number;
-    width: number;
-    fill: Color;
-    value?: string;
-};
-
-/** Note layer type. */
-export type NoteLayer = {
-    type: LayerType.Note;
-    x: number;
-    y: number;
-    height: number;
-    width: number;
-    fill: Color;
-    value?: string;
-};
-
 /** Point type. */
 export type Point = {
     x: number;
     y: number;
+}
+
+export type RestrainedPoint = {
+    x: number;
+    y: number;
+    possibilities: Side[];
 }
 
 /** Point with width and height type. */
@@ -98,6 +39,13 @@ export enum Side {
     Left = 4,
     Right = 8
 };
+
+/** Start of end of the line. */
+export type LineTip = {
+    layerId: string;
+    offset: Point;
+    side: Side;
+}
 
 /** Canvas state type. */
 export type CanvasState =
@@ -118,7 +66,7 @@ export type CanvasState =
     }
     | {
         mode: CanvasMode.Inserting,
-        layerType: LayerType.Ellipse | LayerType.Rectangle | LayerType.Text | LayerType.Note;
+        layerType: LayerType;
     }
     | {
         mode: CanvasMode.Resizing,
@@ -132,6 +80,11 @@ export type CanvasState =
         mode: CanvasMode.Grab,
         source: GrabSource;
     }
+    | {
+        mode: CanvasMode.Connecting,
+        type: LineType,
+        line?: Line
+    }
 
 /** Canvas mode enum. */
 export enum CanvasMode {
@@ -142,7 +95,8 @@ export enum CanvasMode {
     Inserting,
     Resizing,
     Pencil,
-    Grab
+    Grab,
+    Connecting,
 };
 
 /** Grab source enum. */
@@ -151,5 +105,48 @@ export enum GrabSource {
     ScrollWheelPress
 };
 
+/** Layer types enum. */
+export enum LayerType {
+    Rectangle,
+    Ellipse,
+    Path,
+    Text,
+    Note,
+    EPCEvent,
+    EPCFunction,
+    ProcessInterface,
+    EPCGateway
+};
+
+/** Line types enum. */
+export enum LineType {
+    DefaultLine,
+    CurvedLine,
+    ArrowLine,
+};
+
+/** Basic layer type. */
+export type BasicLayer = {
+    type: LayerType;
+    x: number;
+    y: number;
+    height: number;
+    width: number;
+    fill: Color;
+    value?: string;
+};
+
+/** Basic line type. */
+export type BasicLine = {
+    type: LineType;
+    start: LineTip;
+    end?: LineTip;
+    segments?: Point[];
+    fill: Color;
+    value?: string;
+};
+
 /** Layer type alias. */
-export type Layer = RectangleLayer | EllipseLayer | PathLayer | TextLayer | NoteLayer;
+export type Layer = BasicLayer;
+/** Line type alias. */
+export type Line = BasicLine;
