@@ -135,6 +135,7 @@ export type BasicLayer = {
     fill: Color;
     connectedLines: string[];
     value?: string;
+    logicalType?: string;
 };
 
 /** Basic line type. */

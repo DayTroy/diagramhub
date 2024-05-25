@@ -1,4 +1,3 @@
-import { colorToCss } from "@/lib/utils";
 import { Layer } from "@/types/canvas";
 
 /**
@@ -21,7 +20,7 @@ export const EPCGateway = ({
   onPointerDown,
   selectionColor,
 }: EPCGatewayProps) => {
-  const { x, y, width, height, fill } = layer;
+  const { x, y, width, height, logicalType } = layer;
   let updatedWidth = width / 2;
   const halfWidth = updatedWidth / 2;
 
@@ -41,19 +40,8 @@ export const EPCGateway = ({
         ry={5}
       />
 
-    {/* (Circle) */}
-    {/* <circle
-      cx={halfWidth} 
-      cy={halfWidth} 
-      r={10} 
-      stroke="#fff" 
-      strokeWidth="3"  
-      fill="none" 
-      style={{ transform: `translate(${x}px, ${y}px) rotate(45deg)` }}
-    /> */}
-
-      {/* (KREST) */}
-      <path
+    {logicalType === "OR" && <>
+    <path
         d={`M${halfWidth},${halfWidth - 20} L${halfWidth},${halfWidth + 20}`}
         stroke="#fff" // Цвет вертикальной палки
         strokeWidth="2"
@@ -67,9 +55,11 @@ export const EPCGateway = ({
         style={{ transform: `translate(${x}px, ${y}px) rotate(45deg)` }}
         strokeLinecap="round" // Скругление концов линии
       />
+    </>
+    }
 
-        {/* (PLUS) */}
-        {/* <path
+    {logicalType === "AND" && <>
+    <path
             d={`M${halfWidth - 15},${halfWidth} L${halfWidth + 15},${halfWidth}`}
             stroke="#fff" // Цвет плюса
             strokeWidth="2"
@@ -82,7 +72,22 @@ export const EPCGateway = ({
             strokeWidth="2"
             style={{ transform: `translate(${x + width / 4}px, ${y + height / 8}px) rotate(90deg)` }}
             strokeLinecap="round" // Скругление концов линии
-        /> */}
+        />
+    </>
+    }
+
+    {logicalType === "XOR" && <>
+      <circle
+        cx={halfWidth} 
+        cy={halfWidth} 
+        r={10} 
+        stroke="#fff" 
+        strokeWidth="3"  
+        fill="none" 
+        style={{ transform: `translate(${x}px, ${y}px) rotate(45deg)` }}
+      />
+    </>
+    }
     </>
   );
 };
