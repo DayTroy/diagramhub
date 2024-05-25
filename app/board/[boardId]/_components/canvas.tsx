@@ -608,7 +608,7 @@ export const Canvas = ({
             onKeyDown={onKeyDown}
             tabIndex={-1}
         >
-            {/* <Info boardId={boardId} /> */}
+            <Info boardId={boardId} />
             <Participants />
             <Toolbar
                 canvasState={canvasState}
