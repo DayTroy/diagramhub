@@ -26,11 +26,13 @@ import { LinePreview } from "./line-preview";
 import { Info } from "./info";
 import { Button } from "@/components/ui/button";
 import { BadgeX } from "lucide-react";
-import { createLineSegments, tipToRestrainedPoint } from "@/lib/line_utils";
+import { addConnectedLine, createLineSegments, removeConnectedLine, tipToRestrainedPoint, updateLineSegments } from "@/lib/line_utils";
+import { LineDrawingPreview } from "../line-drawing-preview";
 import { useQuery } from "convex/react";
 import { Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
 import { SelectionToolsEPC } from "./EPC/selection-tools-epc";
+
 
 const MAX_LAYERS = 100;
 
@@ -106,7 +108,8 @@ export const Canvas = ({
             y: positionCC.y,
             height: 100,
             width: 100,
-            fill: lastUsedColor
+            fill: lastUsedColor,
+            connectedLines: []
         })
 
         liveLayersIds.push(layerId)
@@ -126,15 +129,24 @@ export const Canvas = ({
         }
 
         const liveLayers = storage.get("layers");
+        const liveLines = storage.get("lines");
 
         for (const id of self.presence.selection) {
             const layer = liveLayers.get(id);
+            if(!layer)
+                continue;
 
-            if (layer) {
-                layer.update({
-                    x: layer.get("x") + pointerDeltaCC.x,
-                    y: layer.get("y") + pointerDeltaCC.y,
-                })
+            layer.update({
+                x: layer.get("x") + pointerDeltaCC.x,
+                y: layer.get("y") + pointerDeltaCC.y,
+            })
+
+            const connectedLines = layer.get('connectedLines')
+            for (const lineId of connectedLines) {
+                const line = liveLines.get(lineId);
+                if (!line)
+                    continue;
+                updateLineSegments(line, liveLayers, pointerDeltaCC, line.get("start").layerId == id);
             }
         }
     }, [
@@ -481,6 +493,7 @@ export const Canvas = ({
                         offset: offset,
                         side: side
                     },
+                    segments: [],
                     fill: defaultColor
                 }
                 setCanvasState({ mode: CanvasMode.Connecting, type: canvasState.type, line: line })
@@ -510,8 +523,11 @@ export const Canvas = ({
 
                     const lineId = nanoid();
 
-                    liveLineIds.push(lineId)
-                    liveLines.set(lineId, line)
+                    liveLineIds.push(lineId);
+                    liveLines.set(lineId, line);
+
+                    addConnectedLine(liveLayers.get(canvasState.line.start.layerId), lineId);
+                    addConnectedLine(liveLayers.get(canvasState.line.end.layerId), lineId);
 
                     setMyPresence({ selection: [] }, { addToHistory: true })
                     setCanvasState({ mode: CanvasMode.None })
@@ -561,14 +577,22 @@ export const Canvas = ({
     const removeAllLines = useMutation((
         { storage }
     ) => {
+        const liveLayers = storage.get("layers");
         const liveLines = storage.get("lines");
         const liveLineIds = storage.get("lineIds");
 
         for (const id of lineIds) {
+            const line = liveLines.get(id)?.toObject();
+            if (line) {
+                const startLayer = liveLayers.get(line.start.layerId);
+                const endLayer = line.end ? liveLayers.get(line.end.layerId) : undefined;
+
+                removeConnectedLine(startLayer, id);
+                removeConnectedLine(endLayer, id);
+            }
+
             liveLines.delete(id);
-
             const index = liveLineIds.indexOf(id);
-
             if (index !== -1) {
                 liveLineIds.delete(index);
             }
@@ -648,6 +672,11 @@ export const Canvas = ({
                     <SelectionBox
                         onResizeHandlePointerDown={onResizeHandlePointerDown}
                     />
+                    {canvasState.mode == CanvasMode.Connecting && (
+                        <LineDrawingPreview
+                            mouseCanvasPos={screenPointToCanvasPoint(mouseScreenPosition, camera)}
+                        />
+                    )}
                     {canvasState.mode === CanvasMode.SelectionNet && canvasState.current != null && (
                         <rect
                             className="fill-blue-500/5 stroke-blue-500 stroke-1"
