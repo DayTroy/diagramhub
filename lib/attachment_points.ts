@@ -9,8 +9,9 @@ export function getLayerAttachmentPoints(layer: Layer): Point[] {
         case LayerType.Rectangle:
             return rectAttachmentPoints(layer);
         case LayerType.Ellipse:
-        case LayerType.EPCGateway:
             return sidesMiddleAtchPoints(layer);
+        case LayerType.EPCGateway:
+            return epcGatewayAtchPoints(layer);
         default:
             return rectAttachmentPoints(layer);
     }
@@ -61,5 +62,14 @@ function sidesMiddleAtchPoints(layer: Layer): Point[] {
         {x: layer.width, y: layer.height/2},
         {x: layer.width/2, y: layer.height},
         {x: 0, y: layer.height/2},
+    ];
+}
+
+function epcGatewayAtchPoints(layer: Layer): Point[] {
+    return [
+        {x: 0, y: 0},
+        {x: layer.width/2/2+10, y: layer.height/2/2+10},
+        {x: 0, y: layer.height/2+20},
+        {x: -(layer.width/2/2+10), y: layer.height/2/2+10},
     ];
 }
