@@ -2,8 +2,8 @@ import { Kalam } from 'next/font/google';
 import ContentEditable, {ContentEditableEvent} from 'react-contenteditable';
 
 import { cn, colorToCss } from '@/lib/utils';
-import { TextLayer } from '@/types/canvas';
 import { useMutation } from '@/liveblocks.config';
+import { Layer } from '@/types/canvas';
 
 const font = Kalam({
     subsets: ["latin"],
@@ -21,7 +21,7 @@ const calculateFontSize = (width: number, height: number) => {
 
 interface TextProps {
     id: string;
-    layer: TextLayer;
+    layer: Layer;
     onPointerDown: (e:React.PointerEvent, id: string) => void;
     selectionColor?: string;
 }
@@ -43,7 +43,7 @@ export const Text = ({
     }, [])
 
     const handleContentChange = (e: ContentEditableEvent) => {
-        updateValue(e.target.value);
+        if (e.target.value !== "") updateValue(e.target.value); 
     }
 
     return (

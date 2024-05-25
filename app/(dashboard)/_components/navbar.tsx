@@ -8,6 +8,10 @@ import {
 import SearchInput from "./search-input";
 import { InviteButton } from "./invite-button";
 
+/**
+ *  Component representing navigation bar
+ *  @category Component
+ */
 export const Navbar = () => {
   const { organization } = useOrganization();
   return (
@@ -40,7 +44,7 @@ export const Navbar = () => {
         />
       </div>
       {organization && <InviteButton />}
-      <UserButton />
+      <UserButton afterSignOutUrl="/sign-in"/>
     </div>
   );
 };

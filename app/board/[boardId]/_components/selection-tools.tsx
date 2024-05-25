@@ -10,11 +10,18 @@ import { Button } from "@/components/ui/button";
 import { Hint } from "@/components/hint";
 import { BringToFront, SendToBack, Trash2 } from "lucide-react";
 
-interface SelectionToolsProps {
+/**
+ * The props type for {@link SelectionTools}
+ */
+export interface SelectionToolsProps {
     camera: Camera;
     setLastUsedColor: (color: Color) => void;
 };
 
+/**
+ *  Component representing selection tools for selected object on canvas
+ *  @category Component
+ */
 export const SelectionTools = memo(({
     camera,
     setLastUsedColor
@@ -80,8 +87,8 @@ export const SelectionTools = memo(({
         return null;
     }
 
-    const x = selectionBounds.width / 2 + selectionBounds.x + camera.x;
-    const y = selectionBounds.y + camera.y;
+    const x = (selectionBounds.width / 2 + selectionBounds.x + camera.x) * camera.scale;
+    const y = (selectionBounds.y + camera.y) * camera.scale;
 
     return (
         <div
@@ -89,7 +96,7 @@ export const SelectionTools = memo(({
             style={{
                 transform: `translate(
                     calc(${x}px - 50%),
-                    calc(${y - 16}px - 50%)
+                    calc(${y - 16}px - 100%)
                 )`
             }}
         >

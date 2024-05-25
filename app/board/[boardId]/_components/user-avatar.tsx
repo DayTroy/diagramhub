@@ -6,13 +6,20 @@ import {
     AvatarImage
 } from "@/components/ui/avatar";
 
-interface UserAvatarProps {
+/**
+ * The props type for {@link UserAvatar}
+ */
+export interface UserAvatarProps {
     src?: string;
     name?: string;
     fallback?: string;
     borderColor?: string;
 }
 
+/**
+ *  Component representing canvas user avatar
+ *  @category Component
+ */
 export const UserAvatar = ({
     src,
     name,

@@ -19,7 +19,7 @@ export const create = mutation({
     args: {
         orgId: v.string(),
         title: v.string(),
-
+        notation: v.string(),
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -35,6 +35,7 @@ export const create = mutation({
             authorId: identity.subject,
             authorName: identity.name!,
             imageUrl: randomImage,
+            notation: args.notation
         });
         return board
     }

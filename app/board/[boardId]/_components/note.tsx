@@ -2,7 +2,7 @@ import { Kalam } from 'next/font/google';
 import ContentEditable, {ContentEditableEvent} from 'react-contenteditable';
 
 import { cn, colorToCss, getContrastingTextColor } from '@/lib/utils';
-import { NoteLayer } from '@/types/canvas';
+import { Layer } from '@/types/canvas';
 import { useMutation } from '@/liveblocks.config';
 
 const font = Kalam({
@@ -19,13 +19,20 @@ const calculateFontSize = (width: number, height: number) => {
     return Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth, maxFontSize);
 }
 
-interface NoteProps {
+/**
+ * The props type for {@link Note}
+ */
+export interface NoteProps {
     id: string;
-    layer: NoteLayer;
+    layer: Layer;
     onPointerDown: (e:React.PointerEvent, id: string) => void;
     selectionColor?: string;
 }
 
+/**
+ *  Component representing note canvas object
+ *  @category Component
+ */
 export const Note = ({
     layer,
     onPointerDown,
@@ -43,7 +50,7 @@ export const Note = ({
     }, [])
 
     const handleContentChange = (e: ContentEditableEvent) => {
-        updateValue(e.target.value);
+        if (e.target.value !== "") updateValue(e.target.value);
     }
 
     return (

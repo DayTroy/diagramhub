@@ -7,6 +7,10 @@ import { Rectangle } from "./rectangle";
 import Ellipse from "./ellipse";
 import { Text } from "./text";
 import { Note } from "./note";
+import { EPCEvent } from "./EPC/epcevent";
+import { EPCFunction } from "./EPC/epcfunction";
+import { ProcessInterface } from "./EPC/process-interface";
+import { EPCGateway } from "./EPC/epcgateway";
 
 interface LayerPreviewProps {
     id: string;
@@ -57,6 +61,42 @@ export const LayerPreview = memo(({
         case LayerType.Ellipse:
             return (
                 <Ellipse
+                    id={id}
+                    layer={layer}
+                    onPointerDown={onLayerPointerDown}
+                    selectionColor={selectionColor}
+                />
+            );
+        case LayerType.EPCEvent:
+            return (
+                <EPCEvent
+                    id={id}
+                    layer={layer}
+                    onPointerDown={onLayerPointerDown}
+                    selectionColor={selectionColor}
+                />
+            );
+        case LayerType.EPCFunction:
+            return (
+                <EPCFunction
+                    id={id}
+                    layer={layer}
+                    onPointerDown={onLayerPointerDown}
+                    selectionColor={selectionColor}
+                />
+            );
+        case LayerType.ProcessInterface:
+            return (
+                <ProcessInterface
+                    id={id}
+                    layer={layer}
+                    onPointerDown={onLayerPointerDown}
+                    selectionColor={selectionColor}
+                />
+            );
+        case LayerType.EPCGateway:
+            return (
+                <EPCGateway
                     id={id}
                     layer={layer}
                     onPointerDown={onLayerPointerDown}

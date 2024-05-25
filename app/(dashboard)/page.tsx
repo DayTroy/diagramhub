@@ -4,13 +4,20 @@ import { useOrganization } from "@clerk/nextjs";
 import { EmptyOrg } from "./_components/empty-org";
 import { BoardList } from "./_components/board-list";
 
-interface DashboardPageProps {
+/**
+ * The props type for {@link DashboardPage}
+ */
+export interface DashboardPageProps {
     searchParams: {
         search?: string;
         favorites?: string;
     };
 };
 
+/**
+ *  Component representing dashboard page
+ *  @category Component
+ */
 const DashboardPage = ({
     searchParams,
 }: DashboardPageProps) => {

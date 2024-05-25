@@ -2,8 +2,12 @@ import { Loader } from "lucide-react"
 import { InfoSkeleton } from "./info"
 import { ParticipantsSkeleton } from "./participants"
 import { ToolbarSkeleton } from "./toolbar"
+import { ZoomBarSkeleton } from "./zoom-bar"
 
-
+/**
+ *  Component representing board loading page
+ *  @category Component
+ */
 export const Loading = () => {
   return (
     <main
@@ -13,6 +17,7 @@ export const Loading = () => {
         <InfoSkeleton />
         <ParticipantsSkeleton />
         <ToolbarSkeleton />
+        <ZoomBarSkeleton />
     </main>
   )
 }

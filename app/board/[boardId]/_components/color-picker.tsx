@@ -3,10 +3,17 @@
 import { colorToCss } from "@/lib/utils";
 import { Color } from "@/types/canvas";
 
-interface ColorPickerProps {
+/**
+ * The props type for {@link ColorPicker}
+ */
+export interface ColorPickerProps {
     onChange: (color: Color) => void;
 }
 
+/**
+ *  Component representing a color picker
+ *  @category Component
+ */
 export const ColorPicker = ({
   onChange
 }: ColorPickerProps) => {
@@ -26,11 +33,18 @@ export const ColorPicker = ({
   )
 }
 
-interface ColorButtonProps {
+/**
+ * The props type for {@link ColorButtonProps}
+ */
+export interface ColorButtonProps {
   onClick: (color: Color) => void;
   color: Color;
 }
 
+/**
+ *  Component representing a color button
+ *  @category Component
+ */
 export const ColorButton = ({
   onClick,
   color

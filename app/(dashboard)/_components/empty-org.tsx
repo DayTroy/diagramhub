@@ -7,6 +7,10 @@ import {
     DialogTrigger
 } from "@/components/ui/dialog";
 
+/**
+ *  Component representing the dialog displayed if the user has no organizations
+ *  @category Component
+ */
 export const EmptyOrg = () => {
     return (
         <div className="h-full flex flex-col items-center justify-center">

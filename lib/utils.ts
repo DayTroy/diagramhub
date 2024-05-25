@@ -1,4 +1,5 @@
 import { Camera, Color, Layer, Point, Side, XYWH } from "@/types/canvas";
+import { LiveObject } from "@liveblocks/client";
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -14,24 +15,59 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Converts connection id to color.
+ *
+ * @param connectionId id of connection.
+ * @returns color corresponding to the connection id
+ */
 export function connectionIdToColor(connectionId: number):string {
   return COLORS[connectionId % COLORS.length];
 }
 
-export function pointerEventToCanvasPoint(
-  e: React.PointerEvent,
+/**
+ * Transforms mouse position coordinates of mouse event from
+ * screen space to canvas space.
+ *
+ * @param e mouse event.
+ * @param camera parameters of camera.
+ * @returns mouse position on canvas
+ */
+export function mouseEventToCanvasPoint(
+  e: React.MouseEvent,
+  camera: Camera
+) {
+  return screenPointToCanvasPoint({x: e.clientX, y: e.clientY}, camera)
+}
+
+/**
+ * Transforms screen point coordinates from
+ * screen space to canvas space.
+ *
+ * @param p screen point.
+ * @param camera parameters of camera.
+ * @returns canvas point
+ */
+export function screenPointToCanvasPoint(
+  p: Point,
   camera: Camera
 ) {
   return {
-    x: Math.round(e.clientX) - camera.x,
-    y: Math.round(e.clientY) - camera.y,
+    x: (Math.round(p.x) / camera.scale) - camera.x,
+    y: (Math.round(p.y) / camera.scale) - camera.y,
   }
 }
 
+/**
+ * Convert color to css string
+ */
 export function colorToCss(color: Color) {
   return `#${color.r.toString(16).padStart(2, "0")}${color.g.toString(16).padStart(2, "0")}${color.b.toString(16).padStart(2, "0")}`;
 }
 
+/**
+ * Resizes bounds
+ */
 export function resizeBounds(bounds: XYWH, corner: Side, point: Point): XYWH {
   const result = {
     x: bounds.x,
@@ -63,6 +99,9 @@ export function resizeBounds(bounds: XYWH, corner: Side, point: Point): XYWH {
   return result;
 }
 
+/**
+ * Finds all layers on board intersecting with rectangle
+ */
 export function findIntersectingLayersWithRectangle(
   layerIds: readonly string[],
   layers: ReadonlyMap<string, Layer>,
@@ -98,8 +137,113 @@ export function findIntersectingLayersWithRectangle(
   return ids;
 }
 
+/**
+ * Determines contrasting text color for a bg color
+ */
 export function getContrastingTextColor(color: Color) {
   const luminance = 0.299 * color.r + 0.587 * color.g + 0.114 * color.b;
 
   return luminance > 182 ? "black": "white";
 }
+
+/**
+ * Clamps value between min and max (inclusive)
+ */
+export function clamp(val: number, min: number, max: number) {
+  return Math.min(Math.max(val, min), max)
+}
+
+export function getLayerCenter(layer: Layer): Point {
+  return {
+    x: layer.x + layer.width / 2,
+    y: layer.y + layer.height / 2
+  }
+}
+
+function luRdDiagonal(point: Point, layer: Layer) {
+  return (layer.height/layer.width) * (point.x - layer.x) + layer.y;
+}
+
+function ldRuDiagonal(point: Point, layer: Layer) {
+  return (layer.height/layer.width) * (layer.x- point.x) + layer.y +layer.height;
+}
+
+export function getLineSide(point: Point, layer: Layer) {
+  if (point.y > luRdDiagonal(point, layer)) {
+    if (point.y > ldRuDiagonal(point, layer)) {
+      return Side.Bottom;
+    } else {
+      return Side.Left;
+    }
+  } else {
+    if (point.y < ldRuDiagonal(point, layer)) {
+      return Side.Top;
+    } else {
+      return Side.Right;
+    }
+  }
+}
+
+export function calculateLineOffset(point: Point, layer: Layer): [Point, Side] {
+  const side = getLineSide(point, layer);
+
+  switch(side) {
+    case Side.Top:
+      return [{
+        x: (point.x - layer.x) / layer.width,
+        y: 0
+      }, side]
+    case Side.Bottom:
+      return [{
+        x: (point.x - layer.x) / layer.width,
+        y: 1
+      }, side]
+    case Side.Left:
+      return [{
+        x: 0,
+        y: (point.y - layer.y) / layer.height
+      }, side]
+    case Side.Right:
+      return [{
+        x: 1,
+        y: (point.y - layer.y) / layer.height
+      }, side]
+  }
+}
+
+/**
+ * Calculates sum of two points.
+ *
+ * @returns (a.x + b.x; a.y + b.y)
+ */
+export function pointsSum(a: Point, b: Point): Point {
+  return {
+    x: a.x + b.x,
+    y: a.y + b.y,
+  }
+}
+
+/**
+ * Calculates difference between points (a - b).
+ *
+ * @returns (a.x - b.x; a.y - b.y)
+ */
+export function pointsDifference(a: Point, b: Point): Point {
+  return {
+    x: a.x - b.x,
+    y: a.y - b.y,
+  }
+}
+
+/**
+ * Returns mouse position as {@link Point} from React.MouseEvent.
+ *
+ * @returns (e.clientX; e.clienY)
+ */
+export function getMousePosition(e: React.MouseEvent): Point {
+  return {
+    x: e.clientX,
+    y: e.clientY,
+  }
+}
+
