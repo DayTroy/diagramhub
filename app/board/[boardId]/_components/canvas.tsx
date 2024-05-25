@@ -27,6 +27,10 @@ import { Info } from "./info";
 import { Button } from "@/components/ui/button";
 import { BadgeX } from "lucide-react";
 import { createLineSegments, tipToRestrainedPoint } from "@/lib/line_utils";
+import { useQuery } from "convex/react";
+import { Id } from "@/convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
+import { SelectionToolsEPC } from "./EPC/selection-tools-epc";
 
 const MAX_LAYERS = 100;
 
@@ -45,6 +49,11 @@ export interface CanvasProps {
 export const Canvas = ({
     boardId,
 }: CanvasProps) => {
+
+    const data = useQuery(api.board.get, {
+        id: boardId as Id<"boards">,
+    });
+
     const layerIds = useStorage((root) => root.layerIds);
     const lineIds = useStorage((root) => root.lineIds);
 
@@ -585,10 +594,14 @@ export const Canvas = ({
                 undo={history.undo}
                 redo={history.redo}
             />
-            <SelectionTools
+            {data?.notation == 'EPC' && <SelectionToolsEPC
                 camera={camera}
                 setLastUsedColor={setLastUsedColor}
-            />
+            />}
+            {data?.notation !== 'EPC' && <SelectionTools
+                camera={camera}
+                setLastUsedColor={setLastUsedColor}
+            />}
             <ZoomBar
                 cameraScale={camera.scale}
                 zoomIn={() => zoomToCenter(true)}
