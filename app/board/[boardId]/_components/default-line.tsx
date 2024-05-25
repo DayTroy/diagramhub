@@ -32,7 +32,7 @@ export const DefaultLineComponent = ({
     const endLayer = end ? liveLayers.get(end.layerId) : undefined;
 
     const pathCommand = useMemo(() => {
-        if (!end || !segments || !startLayer || !endLayer)
+        if (!end  || !startLayer || !endLayer)
             return "";
 
         const startPoint = tipToRestrainedPoint(start, startLayer);
@@ -46,11 +46,20 @@ export const DefaultLineComponent = ({
         return pathCommand.join(" ");
     }, [end, segments, start, startLayer, endLayer])
 
-    if(!startLayer || !endLayer)
+    if(!startLayer || !endLayer || !segments)
         return;
 
     return (
         <g>
+            {/*segments.map((segment, index) => (
+                <circle
+                key={index}
+                cx={segment.x}
+                cy={segment.y}
+                r={10}
+                fill="red"
+                />
+            ))*/}
             <path
             d={pathCommand}
             stroke="#000000"

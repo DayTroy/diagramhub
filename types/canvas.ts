@@ -133,6 +133,7 @@ export type BasicLayer = {
     height: number;
     width: number;
     fill: Color;
+    connectedLines: string[];
     value?: string;
 };
 
@@ -141,7 +142,7 @@ export type BasicLine = {
     type: LineType;
     start: LineTip;
     end?: LineTip;
-    segments?: Point[];
+    segments: Point[];
     fill: Color;
     value?: string;
 };

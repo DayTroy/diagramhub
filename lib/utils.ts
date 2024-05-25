@@ -2,6 +2,7 @@ import { Camera, Color, Layer, Point, Side, XYWH } from "@/types/canvas";
 import { LiveObject } from "@liveblocks/client";
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { findClosestAttachmentPoint } from "./line_utils";
 
 const COLORS = [
   "#DC2626",
@@ -168,7 +169,7 @@ function ldRuDiagonal(point: Point, layer: Layer) {
   return (layer.height/layer.width) * (layer.x- point.x) + layer.y +layer.height;
 }
 
-export function getLineSide(point: Point, layer: Layer) {
+export function getPointSideInRect(point: Point, layer: Layer) {
   if (point.y > luRdDiagonal(point, layer)) {
     if (point.y > ldRuDiagonal(point, layer)) {
       return Side.Bottom;
@@ -184,8 +185,8 @@ export function getLineSide(point: Point, layer: Layer) {
   }
 }
 
-export function calculateLineOffset(point: Point, layer: Layer): [Point, Side] {
-  const side = getLineSide(point, layer);
+/*export function calculateLineOffset(point: Point, layer: Layer): [Point, Side] {
+  const side = getPointSideInRect(point, layer);
 
   switch(side) {
     case Side.Top:
@@ -209,6 +210,13 @@ export function calculateLineOffset(point: Point, layer: Layer): [Point, Side] {
         y: (point.y - layer.y) / layer.height
       }, side]
   }
+}*/
+
+export function calculateLineOffset(point: Point, layer: Layer): [Point, Side] {
+  const atchPoint = findClosestAttachmentPoint(layer, point);
+  const side = getPointSideInRect(layerOffsetToPoint(atchPoint, layer), layer);
+
+  return [{x: atchPoint.x / layer.width, y: atchPoint.y / layer.height}, side]
 }
 
 /**
@@ -236,6 +244,90 @@ export function pointsDifference(a: Point, b: Point): Point {
 }
 
 /**
+ * Calculates square distance between points.
+ */
+export function sqrDist(a: Point, b: Point): number {
+  return (b.x - a.x) ** 2 + (b.y - a.y) ** 2;
+}
+
+/**
+ * Calculates cross product of two vectors.
+ *
+ * @returns v1.x * v2.y - v1.y * v2.x
+ */
+function crossProduct(v1: Point, v2: Point): number {
+  return v1.x * v2.y - v1.y * v2.x;
+}
+
+/**
+ * Checks if point is inside rect, defined by
+ * its upper left corner coordinates, width and height.
+ */
+export function isPointInsideRect(p: Point, rect: XYWH): boolean {
+  return (p.x >= rect.x && p.x <= rect.x + rect.width) &&
+          (p.y >= rect.y && p.y <= rect.y + rect.height);
+}
+
+/**
+ * Checks if two lines intersect
+ */
+function doLinesIntersect(p1: Point, p2: Point, q1: Point, q2: Point): boolean {
+  const r = pointsDifference(p2, p1);
+  const s = pointsDifference(q2, q1);
+  const rxs = crossProduct(r, s);
+  const qpxr = crossProduct(pointsDifference(q1, p1), r);
+
+  if (rxs === 0 && qpxr === 0) {
+    // Collinear case
+    let t0 = (q1.x - p1.x) / r.x;
+    let t1 = (q2.x - p1.x) / r.x;
+    if (r.y !== 0) {
+        t0 = (q1.y - p1.y) / r.y;
+        t1 = (q2.y - p1.y) / r.y;
+    }
+    return (t0 <= 1 && t0 >= 0) || (t1 <= 1 && t1 >= 0);
+  }
+
+  if (rxs === 0 && qpxr !== 0) return false;
+
+  const t = crossProduct(pointsDifference(q1, p1), s) / rxs;
+  const u = crossProduct(pointsDifference(q1, p1), r) / rxs;
+
+  return (t >= 0 && t <= 1) && (u >= 0 && u <= 1);
+}
+
+/**
+ * Checks if line from a to be intersects rect, defined by
+ * its upper left corner coordinates, width and height.
+ */
+export function doesLineIntersectRect(a: Point, b: Point, rect: XYWH): boolean {
+  // Эта функция не работает (а может и работает)
+
+  // Handle case if both points are inside rect
+  if (isPointInsideRect(a, rect) && isPointInsideRect(b, rect)) {
+    return true;
+  }
+
+  let rectPoints : Point[] = [
+    { x: rect.x, y: rect.y },
+    { x: rect.x + rect.width, y: rect.y },
+    { x: rect.x + rect.width, y: rect.y + rect.height },
+    { x: rect.x, y: rect.y + rect.height }
+  ];
+
+  for (let i = 0; i < 4; i++) {
+    let p1 = rectPoints[i];
+    let p2 = rectPoints[(i + 1) % 4];
+    console.log(p1, p2, a, b)
+    if (doLinesIntersect(a, b, p1, p2)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Returns mouse position as {@link Point} from React.MouseEvent.
  *
  * @returns (e.clientX; e.clienY)
@@ -244,6 +336,38 @@ export function getMousePosition(e: React.MouseEvent): Point {
   return {
     x: e.clientX,
     y: e.clientY,
+  }
+}
+
+/**
+ * Finds closest to target point in array
+ */
+export function findClosestPoint(points: Point[], target: Point): Point {
+  let res = points[0];
+  for (let i = 1; i < points.length; i++) {
+    if(sqrDist(points[i], target) <= sqrDist(res, target))
+      res = points[i];
+  }
+  return res;
+}
+
+/**
+ * Transforms layer offset to canvas point
+ */
+export function layerOffsetToPoint(offset: Point, layer: Layer): Point {
+  return {
+    x: layer.x + offset.x,
+    y: layer.y + offset.y
+  }
+}
+
+/**
+ * Finds middle point of line
+ */
+export function findMiddle(a: Point, b: Point): Point {
+  return {
+    x: (a.x + b.x) / 2,
+    y: (a.y + b.y) / 2
   }
 }
 
